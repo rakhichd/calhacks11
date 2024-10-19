@@ -2,7 +2,8 @@ import SwiftUI
 import GoogleMaps
 
 // A simple model to represent a game with a name and location (latitude and longitude)
-struct Game {
+struct Game: Identifiable {
+    let id = UUID()
     let name: String
     let latitude: Double
     let longitude: Double
@@ -51,36 +52,98 @@ struct GoogleMapView: UIViewRepresentable {
     }
 }
 
-// HomeView with Google Maps for each game
+// HomeView with Google Maps for each game and a Create Games button
 struct HomeView: View {
-    // Array of 3 games with their respective locations
-    let games = [
+    // Array of games with their respective locations
+    @State private var games = [
         Game(name: "UC Berkeley", latitude: 37.8719, longitude: -122.2585), // UC Berkeley
         Game(name: "UCLA", latitude: 34.0689, longitude: -118.4452),        // UCLA
         Game(name: "UC San Diego", latitude: 32.8801, longitude: -117.2340) // UC San Diego
     ]
 
-    var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                ForEach(games, id: \.name) { game in
-                    VStack(alignment: .leading) {
-                        Text(game.name) // Display the game name
-                            .font(.headline)
-                            .padding(.horizontal)
+    @State private var showingCreateGameSheet = false
 
-                        // Display the Google Map for each game
-                        GoogleMapView(game: game)
-                            .frame(height: 200) // Reduced frame height for a smaller map
-                            .cornerRadius(10)
-                            .padding(.horizontal)
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(spacing: 20) {
+                    ForEach(games) { game in
+                        VStack(alignment: .leading) {
+                            Text(game.name) // Display the game name
+                                .font(.headline)
+                                .padding(.horizontal)
+
+                            // Display the Google Map for each game
+                            GoogleMapView(game: game)
+                                .frame(height: 200) // Reduced frame height for a smaller map
+                                .cornerRadius(10)
+                                .padding(.horizontal)
+                        }
+                        .padding(.vertical, 10)
                     }
-                    .padding(.vertical, 10)
+                }
+                .padding(.bottom, 200) // Add extra padding to avoid content being cut off
+            }
+            .navigationTitle("Your Games")
+            .navigationBarItems(trailing:
+                Button(action: {
+                    // Show the create game sheet
+                    showingCreateGameSheet = true
+                }) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 24))
+                }
+            )
+            .sheet(isPresented: $showingCreateGameSheet) {
+                CreateGameView { newGame in
+                    games.append(newGame)
                 }
             }
-            .padding(.bottom, 200) // Add extra padding to avoid content being cut off
         }
-        .navigationTitle("Your Games")
+    }
+}
+
+// CreateGameView allows the user to input new game details
+struct CreateGameView: View {
+    @Environment(\.presentationMode) var presentationMode
+    @State private var name = ""
+    @State private var latitudeText = ""
+    @State private var longitudeText = ""
+
+    var onCreate: (Game) -> Void
+
+    var body: some View {
+        NavigationView {
+            Form {
+                Section(header: Text("Game Details")) {
+                    TextField("Name", text: $name)
+                    TextField("Latitude", text: $latitudeText)
+                        .keyboardType(.decimalPad)
+                    TextField("Longitude", text: $longitudeText)
+                        .keyboardType(.decimalPad)
+                }
+            }
+            .navigationTitle("Create Game")
+            .navigationBarItems(leading:
+                Button("Cancel") {
+                    // Dismiss the sheet without saving
+                    presentationMode.wrappedValue.dismiss()
+                },
+                trailing:
+                Button("Save") {
+                    // Validate inputs and create a new game
+                    if let latitude = Double(latitudeText),
+                       let longitude = Double(longitudeText),
+                       !name.isEmpty {
+                        let newGame = Game(name: name, latitude: latitude, longitude: longitude)
+                        onCreate(newGame)
+                        // Dismiss the sheet after saving
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                }
+                .disabled(name.isEmpty || Double(latitudeText) == nil || Double(longitudeText) == nil)
+            )
+        }
     }
 }
 
