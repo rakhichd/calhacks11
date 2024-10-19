@@ -8,24 +8,26 @@
 import SwiftUI
 
 struct ProfileView: View {
+    @EnvironmentObject var appController: AppController
   var body: some View {
+      
+      VStack {
+          Button("Logout") {
+              do {
+                  try appController.signOut()
+              } catch {
+                  print(error.localizedDescription)
+              }
+          }
+      }
+      
+      
+      
     Text("Profile Screen")
       .font(.largeTitle)
       .padding()
   }
 }
-
-//struct ProfileView: View {
-//    var body: some View {
-//        VStack {
-//            Image(systemName: "globe")
-//                .imageScale(.large)
-//                .foregroundStyle(.tint)
-//            Text("Hello, world!")
-//        }
-//        .padding()
-//    }
-//}
 
 #Preview {
     ProfileView()
