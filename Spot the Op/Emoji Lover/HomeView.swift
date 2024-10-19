@@ -64,42 +64,67 @@ struct HomeView: View {
     @State private var showingCreateGameSheet = false
 
     var body: some View {
-        NavigationView {
-            ScrollView {
-                VStack(spacing: 20) {
-                    ForEach(games) { game in
-                        VStack(alignment: .leading) {
-                            Text(game.name) // Display the game name
-                                .font(.headline)
-                                .padding(.horizontal)
-
-                            // Display the Google Map for each game
-                            GoogleMapView(game: game)
-                                .frame(height: 200) // Reduced frame height for a smaller map
-                                .cornerRadius(10)
-                                .padding(.horizontal)
+            NavigationView {
+                ScrollView {
+                    VStack(spacing: 20) {
+                        ForEach(games) { game in
+                            // Wrap each game in a NavigationLink
+                            NavigationLink(destination: GameDetailView(game: game)) {
+                                VStack(alignment: .leading) {
+                                    Text(game.name)
+                                        .font(.headline)
+                                        .padding(.horizontal)
+                                    
+                                    GoogleMapView(game: game)
+                                        .frame(height: 200)
+                                        .cornerRadius(10)
+                                        .padding(.horizontal)
+                                }
+                                .padding(.vertical, 10)
+                            }
                         }
-                        .padding(.vertical, 10)
                     }
+                    .padding(.bottom, 200)
                 }
-                .padding(.bottom, 200) // Add extra padding to avoid content being cut off
-            }
-            .navigationTitle("Your Games")
-            .navigationBarItems(trailing:
-                Button(action: {
-                    // Show the create game sheet
-                    showingCreateGameSheet = true
-                }) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 24))
-                }
-            )
-            .sheet(isPresented: $showingCreateGameSheet) {
-                CreateGameView { newGame in
-                    games.append(newGame)
+                .navigationTitle("Your Games")
+                .navigationBarItems(trailing:
+                    Button(action: {
+                        showingCreateGameSheet = true
+                    }) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 24))
+                    }
+                )
+                .sheet(isPresented: $showingCreateGameSheet) {
+                    CreateGameView { newGame in
+                        games.append(newGame)
+                    }
                 }
             }
         }
+    }
+
+struct GameDetailView: View {
+    let game: Game
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            Text(game.name)
+                .font(.largeTitle)
+                .bold()
+            
+            GoogleMapView(game: game)
+                .frame(height: 300)
+                .cornerRadius(10)
+                .padding()
+
+            Text("Latitude: \(game.latitude)")
+            Text("Longitude: \(game.longitude)")
+            
+            Spacer()
+        }
+        .padding()
+        .navigationTitle(game.name)
     }
 }
 
