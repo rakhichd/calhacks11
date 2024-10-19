@@ -12,48 +12,57 @@ enum InviteOption: String, CaseIterable, Identifiable {
 }
 
 struct HomeView: View {
+    // Use @State to allow modification of the games array
     @State private var games = [
         Game(name: "UC Berkeley", latitude: 37.8719, longitude: -122.2585),
         Game(name: "UCLA", latitude: 34.0689, longitude: -118.4452),
         Game(name: "UC San Diego", latitude: 32.8801, longitude: -117.2340)
     ]
-    
+
+    // State variable to control the presentation of the create game sheet
     @State private var showingCreateGame = false
-    
+
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(spacing: 10) {  // Reduce the spacing here to 10
+                VStack(spacing: 10) {
                     ForEach(games) { game in
-                        VStack(alignment: .leading) {
-                            Text(game.name)
-                                .font(.headline)
-                                .padding(.horizontal)
+                        // Wrap each game in a NavigationLink to GameDetailView
+                        NavigationLink(destination: GameDetailView(game: game)) {
+                            VStack(alignment: .leading) {
+                                Text(game.name)
+                                    .font(.headline)
+                                    .padding(.horizontal)
 
-                            if let mode = game.mode {
-                                Text("Mode: \(mode.rawValue)")
-                                    .font(.subheadline)
-                                    .foregroundColor(.gray)
+                                // Display the game mode if needed
+                                if let mode = game.mode {
+                                    Text("Mode: \(mode.rawValue)")
+                                        .font(.subheadline)
+                                        .foregroundColor(.gray)
+                                        .padding(.horizontal)
+                                }
+
+                                // Display invited friends if any
+                                if !game.invitedFriends.isEmpty {
+                                    Text("Invited Friends: \(game.invitedFriends.joined(separator: ", "))")
+                                        .font(.subheadline)
+                                        .foregroundColor(.blue)
+                                        .padding(.horizontal)
+                                }
+
+                                // Display the Google Map for each game
+                                GoogleMapView(game: game)
+                                    .frame(height: 200) // Reduced frame height for a smaller map
+                                    .cornerRadius(10)
                                     .padding(.horizontal)
                             }
-
-                            if !game.invitedFriends.isEmpty {
-                                Text("Invited Friends: \(game.invitedFriends.joined(separator: ", "))")
-                                    .font(.subheadline)
-                                    .foregroundColor(.blue)
-                                    .padding(.horizontal)
-                            }
-
-                            GoogleMapView(game: game)
-                                .frame(height: 200) // Map height
-                                .cornerRadius(10)
-                                .padding(.horizontal)
                         }
                     }
+                    .padding(.bottom, 20) // Add extra padding to avoid content being cut off
                 }
-                .padding(.bottom, 50)  // Reduce this bottom padding from 200 to 50
             }
             .navigationTitle("Your Games")
+            // Add the Create Game button in the navigation bar
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
@@ -64,6 +73,7 @@ struct HomeView: View {
                     }
                 }
             }
+            // Present the create game sheet when the button is tapped
             .sheet(isPresented: $showingCreateGame) {
                 CreateGameView { newGame in
                     games.append(newGame)
