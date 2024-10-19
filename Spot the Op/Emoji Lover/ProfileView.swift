@@ -20,12 +20,6 @@ struct ProfileView: View {
               }
           }
       }
-      
-      
-      
-    Text("Profile Screen")
-      .font(.largeTitle)
-      .padding()
   }
 }
 

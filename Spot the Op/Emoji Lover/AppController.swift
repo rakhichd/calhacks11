@@ -29,11 +29,11 @@ class AppController: ObservableObject {
 //    }
     
     func listenToAuthChanges() {
-            Auth.auth().addStateDidChangeListener { auth, user in
-                // Update authState based on the presence of the user
-                self.authState = user != nil ? .authenticated : .notAuthenticated
+                Auth.auth().addStateDidChangeListener { auth, user in
+                    // Update authState based on the presence of the user
+                    self.authState = user != nil ? .authenticated : .notAuthenticated
+                }
             }
-        }
     
     func signUp() async throws {
         _ = try await Auth.auth().createUser(withEmail: email, password: password)
