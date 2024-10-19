@@ -1,5 +1,6 @@
 import SwiftUI
 import GoogleMaps
+import GoogleMapsUtils // Import GoogleMapsUtils for heatmap functionality
 import CoreLocation
 
 // MARK: - Models and Enums
@@ -22,6 +23,15 @@ struct Game: Identifiable {
         self.invitedFriends = invitedFriends
         self.spottedHistory = spottedHistory
     }
+
+    // Method to get the top 5 most spotted people
+    func topSpottedPeople(limit: Int = 5) -> [(person: String, count: Int)] {
+        var spottedCount: [String: Int] = [:]
+        for spot in spottedHistory {
+            spottedCount[spot.personSpotted, default: 0] += 1
+        }
+        return spottedCount.sorted { $0.value > $1.value }.prefix(limit).map { ($0.key, $0.value) }
+    }
 }
 
 // Model to represent a spotted location
@@ -42,58 +52,64 @@ enum GameMode: String, CaseIterable, Identifiable {
     var id: String { self.rawValue }
 }
 
-// MARK: - Google Map View
-
-// Create a UIViewRepresentable to wrap the GMSMapView
+// MARK: - Google Map View with Heatmap
 struct GoogleMapView: UIViewRepresentable {
     var game: Game
 
-    // Coordinator to handle gesture recognizers
+    class Coordinator: NSObject, GMSMapViewDelegate {
+        var heatmapLayer: GMUHeatmapTileLayer?
+
+        // Function to add heatmap based on the spotted locations
+        func addHeatMap(mapView: GMSMapView, spots: [SpottedLocation]) {
+            var list = [GMUWeightedLatLng]()
+            
+            // Prepare heatmap data from the list of spotted locations
+            for spot in spots {
+                let coords = GMUWeightedLatLng(
+                    coordinate: CLLocationCoordinate2D(latitude: spot.latitude, longitude: spot.longitude),
+                    intensity: 1.0 // Each spot has equal intensity, you can customize it
+                )
+                list.append(coords)
+            }
+
+            // Create the heatmap layer and add the data
+            let heatmapLayer = GMUHeatmapTileLayer()
+            heatmapLayer.weightedData = list
+            heatmapLayer.radius = 60 // You can adjust the radius for density effect
+            heatmapLayer.map = mapView
+            self.heatmapLayer = heatmapLayer
+        }
+    }
+
     func makeCoordinator() -> Coordinator {
         Coordinator()
     }
 
-    class Coordinator: NSObject, UIGestureRecognizerDelegate {
-        // Allow simultaneous gesture recognition
-        func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
-            return true
-        }
-    }
-
     func makeUIView(context: Context) -> GMSMapView {
-        // Provide the API Key for Google Maps services
-        GMSServices.provideAPIKey("YOUR_API_KEY") // Replace with your actual API key
-
-        // Set up the Google Map camera with the game's specific latitude, longitude, and zoom level
+        GMSServices.provideAPIKey("YOUR_API_KEY") // Replace with your Google Maps API Key
+        
         let camera = GMSCameraPosition.camera(withLatitude: game.latitude, longitude: game.longitude, zoom: 10.0)
-
-        // Initialize the GMSMapView
-        let mapView = GMSMapView()
-        mapView.camera = camera
-        mapView.settings.zoomGestures = true // Enable pinch-to-zoom functionality
-
-        // Set the gesture recognizer delegates to the coordinator
-        if let gestureRecognizers = mapView.gestureRecognizers {
-            for gestureRecognizer in gestureRecognizers {
-                gestureRecognizer.delegate = context.coordinator
-            }
-        }
+        let mapView = GMSMapView.map(withFrame: CGRect.zero, camera: camera)
+        
+        // Add the heatmap using the spotted history
+        context.coordinator.addHeatMap(mapView: mapView, spots: game.spottedHistory)
 
         return mapView
     }
 
     func updateUIView(_ uiView: GMSMapView, context: Context) {
-        // Update the map view if needed
+        // Remove the old heatmap layer if exists
+        context.coordinator.heatmapLayer?.map = nil
+        
+        // Add a new heatmap layer when updating the view
+        context.coordinator.addHeatMap(mapView: uiView, spots: game.spottedHistory)
     }
 }
 
 // MARK: - Game Detail View
-
-// GameDetailView: Detailed view of a specific game with a tab bar for Game and Leaderboard
 struct GameDetailView: View {
     @StateObject private var locationManager = LocationManager() // Use location manager to fetch current location
     @State private var game: Game // Keep game mutable
-    @State private var isSpotting = false // Control the state for spotting
     @State private var showSpotModal = false // Controls the display of the sheet
     @State private var selectedTab = 0 // Control for the tab view
 
@@ -114,17 +130,8 @@ struct GameDetailView: View {
                     Text("Latitude: \(game.latitude)")
                     Text("Longitude: \(game.longitude)")
 
-                    // Display additional game details if available
-                    if let mode = game.mode {
-                        Text("Mode: \(mode.rawValue)")
-                    }
-                    if !game.invitedFriends.isEmpty {
-                        Text("Invited Friends: \(game.invitedFriends.joined(separator: ", "))")
-                    }
-
                     // Spot someone button with current location
                     Button(action: {
-                        // Request location before showing modal
                         locationManager.requestLocation()
                         showSpotModal = true
                     }) {
@@ -161,7 +168,7 @@ struct GameDetailView: View {
             .tag(0)
 
             // Leaderboard Tab
-            LeaderboardView()
+            LeaderboardView(game: game)
                 .tabItem {
                     Label("Leaderboard", systemImage: "list.number")
                 }
@@ -177,15 +184,37 @@ struct GameDetailView: View {
 // MARK: - Leaderboard View
 
 struct LeaderboardView: View {
+    var game: Game // Pass the game as a parameter
+
     var body: some View {
-        VStack {
+        VStack(alignment: .leading) {
             Text("Leaderboard")
                 .font(.largeTitle)
                 .padding()
-            Text("This is where the leaderboard will be displayed.")
-                .padding()
+
+            // Fetch the top 5 people
+            let topSpotted = game.topSpottedPeople()
+
+            if topSpotted.isEmpty {
+                Text("No one has been spotted yet.")
+                    .padding()
+            } else {
+                // Display the top 5 people
+                ForEach(0..<topSpotted.count, id: \.self) { index in
+                    let person = topSpotted[index]
+                    HStack {
+                        Text("\(index + 1). \(person.person)")
+                        Spacer()
+                        Text("\(person.count) times")
+                    }
+                    .padding(.vertical, 5)
+                    .padding(.horizontal)
+                }
+            }
+
             Spacer()
         }
+        .padding()
     }
 }
 
@@ -237,9 +266,8 @@ struct SpotModalView: View {
     // Function to add a new spotted location
     func spotSomeone() {
         // Get the user's current location if available, otherwise fallback to preset coordinates
-        let latitude = currentLocation?.coordinate.latitude ?? 40.730610 // New York City as default
-        let longitude = currentLocation?.coordinate.longitude ?? -73.935242 // New York City as default
-
+        let latitude = currentLocation?.coordinate.latitude ?? 37.871900
+        let longitude = currentLocation?.coordinate.longitude ?? -122.258500
         // Determine the person spotted (either new or selected)
         let personSpotted = newPersonName.isEmpty ? selectedPerson : newPersonName
 
@@ -326,6 +354,7 @@ extension DateFormatter {
 
 // MARK: - Preview
 
+// Optional preview provider for SwiftUI previews
 struct GameView_Previews: PreviewProvider {
     static var previews: some View {
         GameDetailView(game: Game(name: "UC Berkeley", latitude: 37.8719, longitude: -122.2585))
