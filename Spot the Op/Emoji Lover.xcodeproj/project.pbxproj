@@ -10,6 +10,7 @@
 		128358F72CC421FF005A78BC /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 128358F62CC421FF005A78BC /* HomeView.swift */; };
 		128358F92CC42210005A78BC /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 128358F82CC42210005A78BC /* SettingsView.swift */; };
 		128358FB2CC42220005A78BC /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 128358FA2CC42220005A78BC /* ProfileView.swift */; };
+		3A6BFB772CC42B1F0013E734 /* GoogleService-Info (1).plist in Resources */ = {isa = PBXBuildFile; fileRef = 3A6BFB762CC42B1F0013E734 /* GoogleService-Info (1).plist */; };
 		9242A1F32A75B343009263B9 /* Emoji_LoverApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9242A1F22A75B343009263B9 /* Emoji_LoverApp.swift */; };
 		9242A1F52A75B343009263B9 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9242A1F42A75B343009263B9 /* ContentView.swift */; };
 		9242A1F72A75B344009263B9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9242A1F62A75B344009263B9 /* Assets.xcassets */; };
@@ -21,6 +22,7 @@
 		128358F62CC421FF005A78BC /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		128358F82CC42210005A78BC /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		128358FA2CC42220005A78BC /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		3A6BFB762CC42B1F0013E734 /* GoogleService-Info (1).plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info (1).plist"; sourceTree = "<group>"; };
 		5FED3548A50D46FD01E22EDB /* Pods-Emoji Lover.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Emoji Lover.release.xcconfig"; path = "Target Support Files/Pods-Emoji Lover/Pods-Emoji Lover.release.xcconfig"; sourceTree = "<group>"; };
 		9242A1EF2A75B343009263B9 /* Emoji Lover.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Emoji Lover.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		9242A1F22A75B343009263B9 /* Emoji_LoverApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Emoji_LoverApp.swift; sourceTree = "<group>"; };
@@ -84,6 +86,7 @@
 				9242A1F22A75B343009263B9 /* Emoji_LoverApp.swift */,
 				9242A1F42A75B343009263B9 /* ContentView.swift */,
 				128358F62CC421FF005A78BC /* HomeView.swift */,
+				3A6BFB762CC42B1F0013E734 /* GoogleService-Info (1).plist */,
 				128358F82CC42210005A78BC /* SettingsView.swift */,
 				128358FA2CC42220005A78BC /* ProfileView.swift */,
 				9242A1F62A75B344009263B9 /* Assets.xcassets */,
@@ -161,6 +164,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				9242A1FA2A75B344009263B9 /* Preview Assets.xcassets in Resources */,
+				3A6BFB772CC42B1F0013E734 /* GoogleService-Info (1).plist in Resources */,
 				9242A1F72A75B344009263B9 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
