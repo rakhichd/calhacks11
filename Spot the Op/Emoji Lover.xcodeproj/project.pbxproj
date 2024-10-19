@@ -23,6 +23,8 @@
 		3A6BFB8C2CC42BFD0013E734 /* FirebaseRemoteConfig in Frameworks */ = {isa = PBXBuildFile; productRef = 3A6BFB8B2CC42BFD0013E734 /* FirebaseRemoteConfig */; };
 		3A6BFB8E2CC42BFD0013E734 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 3A6BFB8D2CC42BFD0013E734 /* FirebaseStorage */; };
 		3A6BFB902CC42BFD0013E734 /* FirebaseStorageCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = 3A6BFB8F2CC42BFD0013E734 /* FirebaseStorageCombine-Community */; };
+		3A6BFB922CC42F740013E734 /* GameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A6BFB912CC42F720013E734 /* GameView.swift */; };
+		3A6BFB942CC4307F0013E734 /* CreateGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A6BFB932CC4307B0013E734 /* CreateGameView.swift */; };
 		9242A1F32A75B343009263B9 /* Emoji_LoverApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9242A1F22A75B343009263B9 /* Emoji_LoverApp.swift */; };
 		9242A1F52A75B343009263B9 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9242A1F42A75B343009263B9 /* ContentView.swift */; };
 		9242A1F72A75B344009263B9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9242A1F62A75B344009263B9 /* Assets.xcassets */; };
@@ -35,6 +37,8 @@
 		128358F82CC42210005A78BC /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		128358FA2CC42220005A78BC /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		3A6BFB762CC42B1F0013E734 /* GoogleService-Info (1).plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info (1).plist"; sourceTree = "<group>"; };
+		3A6BFB912CC42F720013E734 /* GameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView.swift; sourceTree = "<group>"; };
+		3A6BFB932CC4307B0013E734 /* CreateGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateGameView.swift; sourceTree = "<group>"; };
 		5FED3548A50D46FD01E22EDB /* Pods-Emoji Lover.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Emoji Lover.release.xcconfig"; path = "Target Support Files/Pods-Emoji Lover/Pods-Emoji Lover.release.xcconfig"; sourceTree = "<group>"; };
 		9242A1EF2A75B343009263B9 /* Emoji Lover.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Emoji Lover.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		9242A1F22A75B343009263B9 /* Emoji_LoverApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Emoji_LoverApp.swift; sourceTree = "<group>"; };
@@ -109,10 +113,12 @@
 			children = (
 				9242A1F22A75B343009263B9 /* Emoji_LoverApp.swift */,
 				9242A1F42A75B343009263B9 /* ContentView.swift */,
+				3A6BFB932CC4307B0013E734 /* CreateGameView.swift */,
 				128358F62CC421FF005A78BC /* HomeView.swift */,
 				3A6BFB762CC42B1F0013E734 /* GoogleService-Info (1).plist */,
 				128358F82CC42210005A78BC /* SettingsView.swift */,
 				128358FA2CC42220005A78BC /* ProfileView.swift */,
+				3A6BFB912CC42F720013E734 /* GameView.swift */,
 				9242A1F62A75B344009263B9 /* Assets.xcassets */,
 				9242A1F82A75B344009263B9 /* Preview Content */,
 			);
@@ -245,10 +251,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3A6BFB942CC4307F0013E734 /* CreateGameView.swift in Sources */,
 				128358F72CC421FF005A78BC /* HomeView.swift in Sources */,
 				128358F92CC42210005A78BC /* SettingsView.swift in Sources */,
 				128358FB2CC42220005A78BC /* ProfileView.swift in Sources */,
 				9242A1F52A75B343009263B9 /* ContentView.swift in Sources */,
+				3A6BFB922CC42F740013E734 /* GameView.swift in Sources */,
 				9242A1F32A75B343009263B9 /* Emoji_LoverApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
