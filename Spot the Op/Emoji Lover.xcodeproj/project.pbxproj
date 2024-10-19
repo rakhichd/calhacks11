@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		128358F72CC421FF005A78BC /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 128358F62CC421FF005A78BC /* HomeView.swift */; };
+		128358F92CC42210005A78BC /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 128358F82CC42210005A78BC /* SettingsView.swift */; };
+		128358FB2CC42220005A78BC /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 128358FA2CC42220005A78BC /* ProfileView.swift */; };
 		9242A1F32A75B343009263B9 /* Emoji_LoverApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9242A1F22A75B343009263B9 /* Emoji_LoverApp.swift */; };
 		9242A1F52A75B343009263B9 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9242A1F42A75B343009263B9 /* ContentView.swift */; };
 		9242A1F72A75B344009263B9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9242A1F62A75B344009263B9 /* Assets.xcassets */; };
@@ -15,6 +18,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		128358F62CC421FF005A78BC /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		128358F82CC42210005A78BC /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		128358FA2CC42220005A78BC /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		5FED3548A50D46FD01E22EDB /* Pods-Emoji Lover.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Emoji Lover.release.xcconfig"; path = "Target Support Files/Pods-Emoji Lover/Pods-Emoji Lover.release.xcconfig"; sourceTree = "<group>"; };
 		9242A1EF2A75B343009263B9 /* Emoji Lover.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Emoji Lover.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		9242A1F22A75B343009263B9 /* Emoji_LoverApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Emoji_LoverApp.swift; sourceTree = "<group>"; };
@@ -51,7 +57,6 @@
 				B5DF6D044245B0CF30C038FD /* Pods-Emoji Lover.debug.xcconfig */,
 				5FED3548A50D46FD01E22EDB /* Pods-Emoji Lover.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -78,6 +83,9 @@
 			children = (
 				9242A1F22A75B343009263B9 /* Emoji_LoverApp.swift */,
 				9242A1F42A75B343009263B9 /* ContentView.swift */,
+				128358F62CC421FF005A78BC /* HomeView.swift */,
+				128358F82CC42210005A78BC /* SettingsView.swift */,
+				128358FA2CC42220005A78BC /* ProfileView.swift */,
 				9242A1F62A75B344009263B9 /* Assets.xcassets */,
 				9242A1F82A75B344009263B9 /* Preview Content */,
 			);
@@ -206,6 +214,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				128358F72CC421FF005A78BC /* HomeView.swift in Sources */,
+				128358F92CC42210005A78BC /* SettingsView.swift in Sources */,
+				128358FB2CC42220005A78BC /* ProfileView.swift in Sources */,
 				9242A1F52A75B343009263B9 /* ContentView.swift in Sources */,
 				9242A1F32A75B343009263B9 /* Emoji_LoverApp.swift in Sources */,
 			);
