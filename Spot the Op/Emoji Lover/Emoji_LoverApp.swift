@@ -16,13 +16,11 @@ struct YourApp: App {
     @StateObject private var appController = AppController()
   var body: some Scene {
     WindowGroup {
-//      NavigationView {
         ContentView()
               .environmentObject(appController)
               .onAppear {
                   appController.listenToAuthChanges()
               }
-//      }
     }
   }
 }
