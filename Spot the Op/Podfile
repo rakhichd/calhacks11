@@ -1,0 +1,8 @@
+target 'Emoji Lover' do
+  use_frameworks!
+
+  # Google Maps SDK
+  pod 'GoogleMaps'
+  pod 'Google-Maps-iOS-Utils'
+
+end

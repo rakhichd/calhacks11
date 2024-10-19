@@ -1,0 +1,6 @@
+framework module Pods_Emoji_Lover {
+  umbrella header "Pods-Emoji Lover-umbrella.h"
+
+  export *
+  module * { export * }
+}
