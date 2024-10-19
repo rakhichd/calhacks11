@@ -208,11 +208,9 @@ struct CreateGameView: View {
 
         switch selectedMode {
         case .spotMyEx:
-            // Preset coordinates for "Spot my ex"
             lat = 40.7128 // Example latitude (New York City)
             lon = -74.0060 // Example longitude
         case .spotMyOp:
-            // Preset coordinates for "Spot my op"
             lat = 34.0522 // Example latitude (Los Angeles)
             lon = -118.2437 // Example longitude
         case .custom:
@@ -229,12 +227,10 @@ struct CreateGameView: View {
     }
 
     func generateShareLink() {
-        // Simulate generating a shareable link
         shareLink = "https://myapp.com/join?gameId=\(UUID().uuidString)"
     }
 
     func addUsername() {
-        // Simulate adding a friend by username
         invitedUsernames.append(username)
         username = ""
     }
