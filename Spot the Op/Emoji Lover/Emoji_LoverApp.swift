@@ -6,12 +6,21 @@
 //
 
 import SwiftUI
+import FirebaseCore
 
-//@main
-struct Emoji_LoverApp: App {
-    var body: some Scene {
-        WindowGroup {
-            ContentView()
-        }
+@main
+struct YourApp: App {
+  // register app delegate for Firebase setup
+  @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
+
+    @StateObject private var appController = AppController()
+  var body: some Scene {
+    WindowGroup {
+        ContentView()
+              .environmentObject(appController)
+              .onAppear {
+                  appController.listenToAuthChanges()
+              }
     }
+  }
 }
