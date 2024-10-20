@@ -146,6 +146,7 @@ struct GameDetailView: View {
 
                     Text("Latitude: \(game.latitude)")
                     Text("Longitude: \(game.longitude)")
+                    
 
                     // Spot someone button with current location
                     Button(action: {
@@ -250,6 +251,7 @@ struct SpotModalView: View {
     @Binding var game: Game
     @Binding var showSpotModal: Bool
     @State private var newPersonName = "" // For new person
+    @State private var newDescription = ""
     @State private var selectedPerson = "" // For selecting an existing person
     @ObservedObject var locationManager: LocationManager
     @State private var selectedImage: UIImage? = nil // Store the selected image
@@ -291,6 +293,11 @@ struct SpotModalView: View {
                                 .cornerRadius(10)
                         }
                     }
+                }
+                
+                Section(header: Text("Generate Image From Description ")) {
+                    TextField("Enter Funny Description", text: $newDescription)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
                 }
 
                 Button(action: {
@@ -339,6 +346,7 @@ struct SpotModalView: View {
         // Clear the input field and selection
         newPersonName = ""
         selectedPerson = ""
+        newDescription = ""
 
         // Close the modal
         showSpotModal = false
