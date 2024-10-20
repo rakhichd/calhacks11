@@ -7,6 +7,7 @@ import Firebase
 import FirebaseFirestore
 import FirebaseStorage
 
+
 // MARK: - Models and Enums
 
 // Updated Game model with spottedHistory
@@ -59,6 +60,7 @@ enum GameMode: String, CaseIterable, Identifiable {
 
     var id: String { self.rawValue }
 }
+
 
 // MARK: - Google Map View with Heatmap
 struct GoogleMapView: UIViewRepresentable {
@@ -137,7 +139,8 @@ struct GameDetailView: View {
     @State private var selectedTab = 0 // Control for the tab view
     @State private var selectedGame: Game? // Store the selected game as @State
     var gameId: String // Pass the game ID to fetch the specific game
-    
+    @State private var showPredictiveDataView = false // Controls the display of the predictive data view
+
     var body: some View {
         VStack {
             if let game = selectedGame {
@@ -190,6 +193,41 @@ struct GameDetailView: View {
                         .padding()
                     
                     spotSomeoneButton
+                  
+                  // "Generate Predictive Data" button
+                    Button(action: {
+                        showPredictiveDataView = true
+                    }) {
+                        Text("Generate Predictive Data")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.green)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                    }
+                  
+                  // THIS RIGHT HERE IS EITHER COMMENTED OUT OR PART BELOW IT IS COMENTED OUT
+//                     // Display spotted history with image preview (if available)
+//                     if !game.spottedHistory.isEmpty {
+//                         Text("Spotted History:")
+//                             .font(.headline)
+//                         ForEach(game.spottedHistory) { spot in
+//                             VStack(alignment: .leading) {
+//                                 Text("Person: \(spot.personSpotted)")
+//                                 Text("Latitude: \(spot.latitude), Longitude: \(spot.longitude)")
+//                                 Text("Timestamp: \(spot.timestamp, formatter: DateFormatter.spotFormatter)")
+                                
+//                                 // Show image if available
+//                                 if let imageData = spot.imageData, let image = UIImage(data: imageData) {
+//                                     Image(uiImage: image)
+//                                         .resizable()
+//                                         .scaledToFit()
+//                                         .frame(height: 200)
+//                                         .cornerRadius(10)
+//                                 }
+//                             }
+//                             .padding(.bottom, 5)
                     
                     if !game.spottedHistory.isEmpty {
                         spottedHistoryView(game: game)
@@ -204,9 +242,6 @@ struct GameDetailView: View {
         }
     }
     
-//    private var leaderboardTab: some View {
-//        Text("Leaderboard") // Placeholder for leaderboard view
-//    }
     
     @State var results: [(String, Int)] = []
     
@@ -217,8 +252,7 @@ struct GameDetailView: View {
                 .padding()
 
             // Compute the top spotted people
-            
-            
+           
             if results.isEmpty {
                 Text("No one has been spotted yet.")
                     .padding()
@@ -229,6 +263,7 @@ struct GameDetailView: View {
                         Text("\(name)") // Rank and person's name
                         Spacer()
                         Text("\(count) times") // Number of times they've been spotted
+
                     }
                     .padding(.vertical, 5)
                     .padding(.horizontal)
@@ -240,6 +275,7 @@ struct GameDetailView: View {
             getTopSpotted()
         }
     }
+      
     func getTopSpotted() {
         // Create a dictionary to count occurrences of each person
         // get the storage, find the appropriate game with gameid, then iterate through spottedhistory
@@ -249,7 +285,7 @@ struct GameDetailView: View {
 
         // Create a DispatchGroup to handle multiple async calls
         
-        
+    
         // Log the gameID being fetched
         print("Fetching game with ID: \(gameId)")
         
@@ -272,6 +308,7 @@ struct GameDetailView: View {
                             scores[personSpotted, default:0] += 1
                         } else {
                             print("Person spotted data is missing or not a String")
+
                         }
                     }
                 } else {
@@ -320,9 +357,11 @@ struct GameDetailView: View {
                 .padding(.bottom, 5)
             }
         }
+        .sheet(isPresented: $showPredictiveDataView) {
+            PredictiveDataView(game: game)
+        }
     }
 }
-
 
 // MARK: - Leaderboard View
 struct LeaderboardView: View {
@@ -364,56 +403,15 @@ struct LeaderboardView: View {
     }
 }
 
-//struct LeaderboardView: View {
-//    var game: Game // Pass the game as a parameter
-//
-//    var body: some View {
-//        VStack(alignment: .leading) {
-//            Text("Leaderboard")
-//                .font(.largeTitle)
-//                .padding()
-//
-//            // Fetch the top 5 people
-//            let topSpotted = game.topSpottedPeople()
-//            
-//            
-//            ForEach(game.spottedHistory) { spot in
-//                    Text("Person spotted: \(spot.personSpotted)")
-//                }
-//            
-//
-//            if topSpotted.isEmpty {
-//                Text("No one has been spotted yet.")
-//                    .padding()
-//            } else {
-//                // Display the top 5 people
-//                ForEach(0..<topSpotted.count, id: \.self) { index in
-//                    let person = topSpotted[index]
-//                    HStack {
-//                        Text("\(index + 1). \(person.person)")
-//                        Spacer()
-//                        Text("\(person.count) times")
-//                    }
-//                    .padding(.vertical, 5)
-//                    .padding(.horizontal)
-//                }
-//            }
-//
-//            Spacer()
-//        }
-//        .padding()
-//    }
-//}
-
-// MARK: - Spot Modal View
-
 struct SpotModalView: View {
     @State var game: Game
     @Binding var showSpotModal: Bool
     @State private var newPersonName = "" // For new person
+    @State private var newDescription = ""
     @State private var selectedPerson = "" // For selecting an existing person
     @ObservedObject var locationManager: LocationManager
-    @State private var selectedImage: UIImage? = nil // Store the selected image
+    @State private var selectedImage: UIImage? = nil // Store the uploaded image
+    @State private var generatedImage: UIImage? = nil // Store the generated image
     @State private var showImagePicker = false // Control for showing the image picker
 
     var body: some View {
@@ -433,8 +431,10 @@ struct SpotModalView: View {
                     }
                 }
 
-                Section(header: Text("Upload an image")) {
+                // Section for uploading an image
+                Section(header: Text("Upload an Image")) {
                     if let image = selectedImage {
+                        // Display the user-chosen image
                         Image(uiImage: image)
                             .resizable()
                             .scaledToFit()
@@ -455,6 +455,47 @@ struct SpotModalView: View {
                 }
                 
 
+                // Section for generating an image
+                Section(header: Text("Generate Image From Description")) {
+                    VStack {
+                        HStack {
+                            TextField("Enter Funny Description", text: $newDescription)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+
+                            Button(action: {
+                                generateImageFromDescription(prompt: newDescription) { imageData in
+                                    if let imageData = imageData, let image = UIImage(data: imageData) {
+                                        // Successfully got image data, update the UI for generated image
+                                        DispatchQueue.main.async {
+                                            self.generatedImage = image
+                                        }
+                                    } else {
+                                        // Handle invalid image data case
+                                        print("Invalid image data received")
+                                    }
+                                }
+                            }) {
+                                Text("Generate Image")
+                                    .padding(8)
+                                    .background(Color.blue)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(8)
+                            }
+                        }
+
+                        // Conditionally show the generated image if available
+                        if let generatedImage = generatedImage {
+                            Image(uiImage: generatedImage)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(height: 200)
+                                .cornerRadius(10)
+                                .padding(.top) // Add some padding between the button and image
+                        }
+                    }
+                }
+
+                // Button to add the spot
                 Button(action: {
                     if let currentLocation = locationManager.location {
                         let latitude = currentLocation.coordinate.latitude
@@ -526,6 +567,9 @@ struct SpotModalView: View {
         newPersonName = ""
         selectedPerson = ""
         showSpotModal = false
+      newDescription = ""
+        selectedImage = nil
+        generatedImage = nil
     }
     
     func uploadImageToFirebase(imageName: String, gameId: String, imageData: Data, completion: @escaping (String?, Error?) -> Void) {
@@ -580,6 +624,114 @@ struct SpotModalView: View {
         }
     }
 }
+        
+    
+  
+    func generateImageFromDescription(prompt: String, completion: @escaping (Data?) -> Void) {
+        // Construct the URL (no query parameters for POST)
+        let urlString = "https://api.hyperbolic.xyz/v1/image/generation"
+        
+        // Check if the URL is valid
+        guard let url = URL(string: urlString) else {
+            print("Error: Invalid URL")
+            completion(nil)
+            return
+        }
+        
+        var request = URLRequest(url: url, timeoutInterval: 60.0)
+        request.httpMethod = "POST" // Use POST method
+        
+        // Set the request headers
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJtb2hhbnh1QGJlcmtlbGV5LmVkdSIsImlhdCI6MTcyOTM5MzIyOX0.vXFeqFzFn-dQmaT24KPcfcp9ThHMMHzIUZ_z1teg_4E", forHTTPHeaderField: "Authorization")
+
+        // Create the body with the prompt as JSON
+        let body: [String: Any] = [
+            "model_name": "FLUX.1-dev",   // Example model name (use the correct one)
+            "prompt": prompt,             // The prompt provided by the user
+            "steps": 30,                  // Example parameters (adjust if necessary)
+            "cfg_scale": 5,
+            "enable_refiner": false,
+            "height": 1024,
+            "width": 1024,
+            "backend": "auto"
+        ]
+        
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [])
+        } catch {
+            print("Error creating JSON body: \(error)")
+            completion(nil)
+            return
+        }
+
+        // Create the data task for the URLSession
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            // Handle networking errors
+            if let error = error {
+                print("Network Error: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    completion(nil)
+                }
+                return
+            }
+
+            // Ensure data is not nil
+            guard let data = data else {
+                print("Error: No data received")
+                DispatchQueue.main.async {
+                    completion(nil)
+                }
+                return
+            }
+
+            // Log the raw response data for debugging
+            if let rawResponse = String(data: data, encoding: .utf8) {
+                print("Response Data: \(rawResponse)")
+            }
+
+            do {
+                // Parse the JSON response
+                if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
+                   let images = json["images"] as? [[String: Any]],
+                   let base64ImageString = images.first?["image"] as? String {
+                    
+                    // Decode the base64 string to Data
+                    print("Base64 Image String: \(base64ImageString)")
+                    if let imageData = Data(base64Encoded: base64ImageString, options: .ignoreUnknownCharacters) {
+                        // Return the raw Data (binary image data)
+                        
+                        DispatchQueue.main.async {
+                            completion(imageData)
+                        }
+                    } else {
+                        print("Error: Failed to decode base64 image data")
+                        DispatchQueue.main.async {
+                            completion(nil)
+                        }
+                    }
+                } else {
+                    print("Error: Invalid JSON format or missing 'image' key")
+                    DispatchQueue.main.async {
+                        completion(nil)
+                    }
+                }
+            } catch {
+                // Handle any JSON parsing errors
+                print("Error parsing JSON: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    completion(nil)
+                }
+            }
+        }
+
+        // Start the network request
+        task.resume()
+    
+    }
+
+
+    
 
 // MARK: - Location Manager
 
@@ -684,12 +836,3 @@ struct ImagePicker: UIViewControllerRepresentable {
 
     func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
 }
-
-// MARK: - Preview
-
-//// Optional preview provider for SwiftUI previews
-//struct GameView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        GameDetailView(game: Game(id: "50BCBFB2-D9BD-4888-A56B-BC2A3F7F75E1", name: "UC Berkeley", latitude: 37.8719, longitude: -122.2585))
-//    }
-//}
