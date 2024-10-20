@@ -7,6 +7,7 @@ import UIKit
 // MARK: - Models and Enums
 
 // Updated Game model with spottedHistory
+// Updated Game model with spottedHistory
 struct Game: Identifiable {
     let id = UUID()
     let name: String
@@ -64,20 +65,34 @@ struct GoogleMapView: UIViewRepresentable {
         // Function to add heatmap based on the spotted locations
         func addHeatMap(mapView: GMSMapView, spots: [SpottedLocation]) {
             var list = [GMUWeightedLatLng]()
+            var spotFrequency: [String: Int] = [:]
             
-            // Prepare heatmap data from the list of spotted locations
+            // Group spots by their latitude and longitude (rounded for vicinity)
             for spot in spots {
-                let coords = GMUWeightedLatLng(
-                    coordinate: CLLocationCoordinate2D(latitude: spot.latitude, longitude: spot.longitude),
-                    intensity: 1.0 // Each spot has equal intensity, you can customize it
-                )
-                list.append(coords)
+                let lat = round(spot.latitude * 10000) / 10000 // Increased precision to 4 decimal places (~10 meters)
+                let lng = round(spot.longitude * 10000) / 10000
+                let key = "\(lat),\(lng)"
+                
+                // Increment the frequency for this location
+                spotFrequency[key, default: 0] += 1
+            }
+
+            // Prepare heatmap data with adjusted intensity based on frequency
+            for (key, count) in spotFrequency {
+                let coordinates = key.split(separator: ",")
+                if let lat = Double(coordinates[0]), let lng = Double(coordinates[1]) {
+                    let coords = GMUWeightedLatLng(
+                        coordinate: CLLocationCoordinate2D(latitude: lat, longitude: lng),
+                        intensity: Float(count) // The more frequent, the higher the intensity
+                    )
+                    list.append(coords)
+                }
             }
 
             // Create the heatmap layer and add the data
             let heatmapLayer = GMUHeatmapTileLayer()
             heatmapLayer.weightedData = list
-            heatmapLayer.radius = 60 // You can adjust the radius for density effect
+            heatmapLayer.radius = 80 // Increased the radius for a more spread-out heat effect
             heatmapLayer.map = mapView
             self.heatmapLayer = heatmapLayer
         }
