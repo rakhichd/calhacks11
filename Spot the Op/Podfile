@@ -4,5 +4,7 @@ target 'Emoji Lover' do
   # Google Maps SDK
   pod 'GoogleMaps'
   pod 'Google-Maps-iOS-Utils'
+  pod 'Alamofire', '~> 5.4'
+
 
 end
