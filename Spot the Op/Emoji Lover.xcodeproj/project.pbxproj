@@ -34,6 +34,7 @@
 		3A6BFB9E2CC43EEF0013E734 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A6BFB9D2CC43EEA0013E734 /* AppDelegate.swift */; };
 		3A6BFBA02CC43F7B0013E734 /* AuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A6BFB9F2CC43F790013E734 /* AuthView.swift */; };
 		3A6BFBA22CC43FD60013E734 /* AppController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A6BFBA12CC43FD30013E734 /* AppController.swift */; };
+		3A6BFBA42CC4FC560013E734 /* GameViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A6BFBA32CC4FC530013E734 /* GameViewModel.swift */; };
 		9242A1F32A75B343009263B9 /* Emoji_LoverApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9242A1F22A75B343009263B9 /* Emoji_LoverApp.swift */; };
 		9242A1F52A75B343009263B9 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9242A1F42A75B343009263B9 /* ContentView.swift */; };
 		9242A1F72A75B344009263B9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9242A1F62A75B344009263B9 /* Assets.xcassets */; };
@@ -56,6 +57,7 @@
 		3A6BFB9D2CC43EEA0013E734 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		3A6BFB9F2CC43F790013E734 /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
 		3A6BFBA12CC43FD30013E734 /* AppController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppController.swift; sourceTree = "<group>"; };
+		3A6BFBA32CC4FC530013E734 /* GameViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameViewModel.swift; sourceTree = "<group>"; };
 		5FED3548A50D46FD01E22EDB /* Pods-Emoji Lover.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Emoji Lover.release.xcconfig"; path = "Target Support Files/Pods-Emoji Lover/Pods-Emoji Lover.release.xcconfig"; sourceTree = "<group>"; };
 		9242A1EF2A75B343009263B9 /* Emoji Lover.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Emoji Lover.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		9242A1F22A75B343009263B9 /* Emoji_LoverApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Emoji_LoverApp.swift; sourceTree = "<group>"; };
@@ -142,6 +144,7 @@
 				128358FA2CC42220005A78BC /* ProfileView.swift */,
 				3A6BFBA12CC43FD30013E734 /* AppController.swift */,
 				3A6BFB9F2CC43F790013E734 /* AuthView.swift */,
+				3A6BFBA32CC4FC530013E734 /* GameViewModel.swift */,
 				3A6BFB912CC42F720013E734 /* GameView.swift */,
 				9242A1F62A75B344009263B9 /* Assets.xcassets */,
 				128359162CC4F1B9005A78BC /* PressStart2P-Regular 2.ttf */,
@@ -302,6 +305,7 @@
 				3A6BFB9E2CC43EEF0013E734 /* AppDelegate.swift in Sources */,
 				3A6BFBA22CC43FD60013E734 /* AppController.swift in Sources */,
 				3A6BFB942CC4307F0013E734 /* CreateGameView.swift in Sources */,
+				3A6BFBA42CC4FC560013E734 /* GameViewModel.swift in Sources */,
 				128359132CC4E53A005A78BC /* PredictiveDataView.swift in Sources */,
 				128358F72CC421FF005A78BC /* HomeView.swift in Sources */,
 				128358F92CC42210005A78BC /* SettingsView.swift in Sources */,
