@@ -255,7 +255,8 @@ struct SpotModalView: View {
     @State private var newDescription = ""
     @State private var selectedPerson = "" // For selecting an existing person
     @ObservedObject var locationManager: LocationManager
-    @State private var selectedImage: UIImage? = nil // Store the selected image
+    @State private var selectedImage: UIImage? = nil // Store the uploaded image
+    @State private var generatedImage: UIImage? = nil // Store the generated image
     @State private var showImagePicker = false // Control for showing the image picker
 
     var body: some View {
@@ -275,8 +276,10 @@ struct SpotModalView: View {
                     }
                 }
 
-                Section(header: Text("Upload an image")) {
+                // Section for uploading an image
+                Section(header: Text("Upload an Image")) {
                     if let image = selectedImage {
+                        // Display the user-chosen image
                         Image(uiImage: image)
                             .resizable()
                             .scaledToFit()
@@ -295,19 +298,20 @@ struct SpotModalView: View {
                         }
                     }
                 }
-                
+
+                // Section for generating an image
                 Section(header: Text("Generate Image From Description")) {
                     VStack {
                         HStack {
                             TextField("Enter Funny Description", text: $newDescription)
                                 .textFieldStyle(RoundedBorderTextFieldStyle())
-                            
+
                             Button(action: {
                                 generateImageFromDescription(prompt: newDescription) { imageData in
                                     if let imageData = imageData, let image = UIImage(data: imageData) {
-                                        // Successfully got image data, update the UI
+                                        // Successfully got image data, update the UI for generated image
                                         DispatchQueue.main.async {
-                                            self.selectedImage = image
+                                            self.generatedImage = image
                                         }
                                     } else {
                                         // Handle invalid image data case
@@ -321,12 +325,10 @@ struct SpotModalView: View {
                                     .foregroundColor(.white)
                                     .cornerRadius(8)
                             }
-
-                            
                         }
 
                         // Conditionally show the generated image if available
-                        if let generatedImage = selectedImage {
+                        if let generatedImage = generatedImage {
                             Image(uiImage: generatedImage)
                                 .resizable()
                                 .scaledToFit()
@@ -337,6 +339,7 @@ struct SpotModalView: View {
                     }
                 }
 
+                // Button to add the spot
                 Button(action: {
                     if let currentLocation = locationManager.location {
                         let latitude = currentLocation.coordinate.latitude
@@ -371,8 +374,8 @@ struct SpotModalView: View {
     func spotSomeone(latitude: Double, longitude: Double) {
         let personSpotted = newPersonName.isEmpty ? selectedPerson : newPersonName
 
-        // Convert selected image to Data for storage
-        let imageData = selectedImage?.jpegData(compressionQuality: 0.8)
+        // Use either the selectedImage or the generatedImage (whichever is not nil)
+        let imageData = selectedImage?.jpegData(compressionQuality: 0.8) ?? generatedImage?.jpegData(compressionQuality: 0.8)
 
         // Create a new SpottedLocation object with the provided latitude, longitude, and image
         let spottedLocation = SpottedLocation(latitude: latitude, longitude: longitude, timestamp: Date(), personSpotted: personSpotted, imageData: imageData)
@@ -380,14 +383,17 @@ struct SpotModalView: View {
         // Update the game's spotted history
         game.spottedHistory.append(spottedLocation)
 
-        // Clear the input field and selection
+        // Clear the input fields and selections
         newPersonName = ""
         selectedPerson = ""
         newDescription = ""
+        selectedImage = nil
+        generatedImage = nil
 
         // Close the modal
         showSpotModal = false
     }
+
     
    
     func generateImageFromDescription(prompt: String, completion: @escaping (Data?) -> Void) {
