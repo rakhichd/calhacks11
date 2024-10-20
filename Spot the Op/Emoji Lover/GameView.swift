@@ -4,6 +4,7 @@ import GoogleMapsUtils // Import GoogleMapsUtils for heatmap functionality
 import CoreLocation
 import UIKit
 
+
 // MARK: - Models and Enums
 
 // Updated Game model with spottedHistory
@@ -104,7 +105,7 @@ struct GoogleMapView: UIViewRepresentable {
     }
 
     func makeUIView(context: Context) -> GMSMapView {
-        GMSServices.provideAPIKey("YOUR_API_KEY") // Replace with your Google Maps API Key
+        GMSServices.provideAPIKey("AIzaSyAYOhICkLqvWUF1FQeR9AJRmYSlPTg765s") // Replace with your Google Maps API Key
         
         let camera = GMSCameraPosition.camera(withLatitude: game.latitude, longitude: game.longitude, zoom: 10.0)
         let mapView = GMSMapView.map(withFrame: CGRect.zero, camera: camera)
@@ -144,6 +145,7 @@ struct GameDetailView: View {
                         .frame(height: 300)
                         .cornerRadius(10)
                         .padding()
+
 
                     // Spot someone button with current location
                     Button(action: {
@@ -263,9 +265,11 @@ struct SpotModalView: View {
     @Binding var game: Game
     @Binding var showSpotModal: Bool
     @State private var newPersonName = "" // For new person
+    @State private var newDescription = ""
     @State private var selectedPerson = "" // For selecting an existing person
     @ObservedObject var locationManager: LocationManager
-    @State private var selectedImage: UIImage? = nil // Store the selected image
+    @State private var selectedImage: UIImage? = nil // Store the uploaded image
+    @State private var generatedImage: UIImage? = nil // Store the generated image
     @State private var showImagePicker = false // Control for showing the image picker
 
     var body: some View {
@@ -285,8 +289,10 @@ struct SpotModalView: View {
                     }
                 }
 
-                Section(header: Text("Upload an image")) {
+                // Section for uploading an image
+                Section(header: Text("Upload an Image")) {
                     if let image = selectedImage {
+                        // Display the user-chosen image
                         Image(uiImage: image)
                             .resizable()
                             .scaledToFit()
@@ -306,6 +312,47 @@ struct SpotModalView: View {
                     }
                 }
 
+                // Section for generating an image
+                Section(header: Text("Generate Image From Description")) {
+                    VStack {
+                        HStack {
+                            TextField("Enter Funny Description", text: $newDescription)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+
+                            Button(action: {
+                                generateImageFromDescription(prompt: newDescription) { imageData in
+                                    if let imageData = imageData, let image = UIImage(data: imageData) {
+                                        // Successfully got image data, update the UI for generated image
+                                        DispatchQueue.main.async {
+                                            self.generatedImage = image
+                                        }
+                                    } else {
+                                        // Handle invalid image data case
+                                        print("Invalid image data received")
+                                    }
+                                }
+                            }) {
+                                Text("Generate Image")
+                                    .padding(8)
+                                    .background(Color.blue)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(8)
+                            }
+                        }
+
+                        // Conditionally show the generated image if available
+                        if let generatedImage = generatedImage {
+                            Image(uiImage: generatedImage)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(height: 200)
+                                .cornerRadius(10)
+                                .padding(.top) // Add some padding between the button and image
+                        }
+                    }
+                }
+
+                // Button to add the spot
                 Button(action: {
                     if let currentLocation = locationManager.location {
                         let latitude = currentLocation.coordinate.latitude
@@ -340,8 +387,8 @@ struct SpotModalView: View {
     func spotSomeone(latitude: Double, longitude: Double) {
         let personSpotted = newPersonName.isEmpty ? selectedPerson : newPersonName
 
-        // Convert selected image to Data for storage
-        let imageData = selectedImage?.jpegData(compressionQuality: 0.8)
+        // Use either the selectedImage or the generatedImage (whichever is not nil)
+        let imageData = selectedImage?.jpegData(compressionQuality: 0.8) ?? generatedImage?.jpegData(compressionQuality: 0.8)
 
         // Create a new SpottedLocation object with the provided latitude, longitude, and image
         let spottedLocation = SpottedLocation(latitude: latitude, longitude: longitude, timestamp: Date(), personSpotted: personSpotted, imageData: imageData)
@@ -349,13 +396,124 @@ struct SpotModalView: View {
         // Update the game's spotted history
         game.spottedHistory.append(spottedLocation)
 
-        // Clear the input field and selection
+        // Clear the input fields and selections
         newPersonName = ""
         selectedPerson = ""
+        newDescription = ""
+        selectedImage = nil
+        generatedImage = nil
 
         // Close the modal
         showSpotModal = false
     }
+
+    
+   
+    func generateImageFromDescription(prompt: String, completion: @escaping (Data?) -> Void) {
+        // Construct the URL (no query parameters for POST)
+        let urlString = "https://api.hyperbolic.xyz/v1/image/generation"
+        
+        // Check if the URL is valid
+        guard let url = URL(string: urlString) else {
+            print("Error: Invalid URL")
+            completion(nil)
+            return
+        }
+        
+        var request = URLRequest(url: url, timeoutInterval: 60.0)
+        request.httpMethod = "POST" // Use POST method
+        
+        // Set the request headers
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJtb2hhbnh1QGJlcmtlbGV5LmVkdSIsImlhdCI6MTcyOTM5MzIyOX0.vXFeqFzFn-dQmaT24KPcfcp9ThHMMHzIUZ_z1teg_4E", forHTTPHeaderField: "Authorization")
+
+        // Create the body with the prompt as JSON
+        let body: [String: Any] = [
+            "model_name": "FLUX.1-dev",   // Example model name (use the correct one)
+            "prompt": prompt,             // The prompt provided by the user
+            "steps": 30,                  // Example parameters (adjust if necessary)
+            "cfg_scale": 5,
+            "enable_refiner": false,
+            "height": 1024,
+            "width": 1024,
+            "backend": "auto"
+        ]
+        
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [])
+        } catch {
+            print("Error creating JSON body: \(error)")
+            completion(nil)
+            return
+        }
+
+        // Create the data task for the URLSession
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            // Handle networking errors
+            if let error = error {
+                print("Network Error: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    completion(nil)
+                }
+                return
+            }
+
+            // Ensure data is not nil
+            guard let data = data else {
+                print("Error: No data received")
+                DispatchQueue.main.async {
+                    completion(nil)
+                }
+                return
+            }
+
+            // Log the raw response data for debugging
+            if let rawResponse = String(data: data, encoding: .utf8) {
+                print("Response Data: \(rawResponse)")
+            }
+
+            do {
+                // Parse the JSON response
+                if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
+                   let images = json["images"] as? [[String: Any]],
+                   let base64ImageString = images.first?["image"] as? String {
+                    
+                    // Decode the base64 string to Data
+                    print("Base64 Image String: \(base64ImageString)")
+                    if let imageData = Data(base64Encoded: base64ImageString, options: .ignoreUnknownCharacters) {
+                        // Return the raw Data (binary image data)
+                        
+                        DispatchQueue.main.async {
+                            completion(imageData)
+                        }
+                    } else {
+                        print("Error: Failed to decode base64 image data")
+                        DispatchQueue.main.async {
+                            completion(nil)
+                        }
+                    }
+                } else {
+                    print("Error: Invalid JSON format or missing 'image' key")
+                    DispatchQueue.main.async {
+                        completion(nil)
+                    }
+                }
+            } catch {
+                // Handle any JSON parsing errors
+                print("Error parsing JSON: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    completion(nil)
+                }
+            }
+        }
+
+        // Start the network request
+        task.resume()
+    
+    }
+
+
+    
 }
 
 // MARK: - Location Manager
