@@ -20,83 +20,105 @@ struct HomeView: View {
         Game(name: "UCLA", latitude: 34.0689, longitude: -118.4452),
         Game(name: "UC San Diego", latitude: 32.8801, longitude: -117.2340)
     ]
-
+    
     // State variable to control the presentation of the create game sheet
     @State private var showingCreateGame = false
-
+    
     // State variable for location authorization
     @State private var isAuthorized: Bool = false
-
+    
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: 10) {
-                    ForEach(games) { game in
-                        // Wrap each game in a NavigationLink to GameDetailView
-                        NavigationLink(destination: GameDetailView(game: game)) {
-                            VStack(alignment: .leading) {
-                                Text(game.name)
-                                    .font(.custom("PressStart2P-Regular", size: 14))
-                                    .bold()
-                                    .foregroundColor(Color(red: 0.75, green: 0.87, blue: 0.97)) // Light pastel blue
-                                    .padding(.horizontal)
-
-                                // Display the game mode if needed
-                                if let mode = game.mode {
-                                    Text("Mode: \(mode.rawValue)")
-                                        .font(.custom("PressStart2P-Regular", size: 12))
-                                        .foregroundColor(Color(red: 0.95, green: 0.76, blue: 0.98)) // Light pastel pink
-                                        .padding(.horizontal)
+            GeometryReader {geo in
+                ZStack {
+                    Image("cookie_sample")
+                        .resizable()
+                        .scaledToFill()
+                        .edgesIgnoringSafeArea(.all)
+                        .frame(width: geo.size.width, height:
+                                geo.size.height, alignment: .center)
+                        .opacity(0.2)
+                    
+                    
+                    
+                    
+                    ScrollView {
+                        VStack(spacing: 10) {
+                            ForEach(games) { game in
+                                // Wrap each game in a NavigationLink to GameDetailView
+                                NavigationLink(destination: GameDetailView(game: game)) {
+                                    VStack(alignment: .leading) {
+                                        Text(game.name)
+                                            .font(.custom("PressStart2P-Regular", size: 14))
+                                            .bold()
+                                            .foregroundColor(Color(red: 0.75, green: 0.87, blue: 0.97)) // Light pastel blue
+                                            .padding(.horizontal)
+                                        
+                                        // Display the game mode if needed
+                                        if let mode = game.mode {
+                                            Text("Mode: \(mode.rawValue)")
+                                                .font(.custom("PressStart2P-Regular", size: 12))
+                                                .foregroundColor(Color(red: 0.95, green: 0.76, blue: 0.98)) // Light pastel pink
+                                                .padding(.horizontal)
+                                        }
+                                        
+                                        // Display invited friends if any
+                                        if !game.invitedFriends.isEmpty {
+                                            Text("Invited Friends: \(game.invitedFriends.joined(separator: ", "))")
+                                                .font(.custom("PressStart2P-Regular", size: 12))
+                                                .foregroundColor(Color(red: 0.8, green: 0.95, blue: 0.8)) // Light pastel green
+                                                .padding(.horizontal)
+                                        }
+                                        
+                                        // Display the Google Map for each game
+                                        GoogleMapView(game: game)
+                                            .frame(height: 200) // Reduced frame height for a smaller map
+                                            .cornerRadius(10)
+                                            .padding(.horizontal)
+                                    }
+                                    .background(Color.black.opacity(0.8)) // Dark background for game card
+                                    .cornerRadius(15)
+                                    .shadow(color: .black, radius: 10, x: 0, y: 5)
                                 }
-
-                                // Display invited friends if any
-                                if !game.invitedFriends.isEmpty {
-                                    Text("Invited Friends: \(game.invitedFriends.joined(separator: ", "))")
-                                        .font(.custom("PressStart2P-Regular", size: 12))
-                                        .foregroundColor(Color(red: 0.8, green: 0.95, blue: 0.8)) // Light pastel green
-                                        .padding(.horizontal)
-                                }
-
-                                // Display the Google Map for each game
-                                GoogleMapView(game: game)
-                                    .frame(height: 200) // Reduced frame height for a smaller map
-                                    .cornerRadius(10)
-                                    .padding(.horizontal)
                             }
-                            .background(Color.black.opacity(0.8)) // Dark background for game card
-                            .cornerRadius(15)
-                            .shadow(color: .black, radius: 10, x: 0, y: 5)
+                            .padding(.bottom, 20) // Add extra padding to avoid content being cut off
                         }
                     }
-                    .padding(.bottom, 20) // Add extra padding to avoid content being cut off
-                }
-            }
-            .background(Color.black) // Dark background for the entire view
-            .navigationTitle("Your Games")
-            .foregroundColor(.white) // Set the text color to white
-            // Add the Create Game button in the navigation bar
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        showingCreateGame = true
-                    }) {
-                        Image(systemName: "plus.circle")
-                            .font(.title)
-                            .foregroundColor(Color(red: 0.75, green: 0.87, blue: 0.97)) // Light pastel blue
+                    .background(
+//                        Image("cookie_sample")
+//                            .resizable()
+//                            .scaledToFill()
+//                            .ignoresSafeArea()
+                        Color.black
+                    ) // Dark background for the entire view
+                    .navigationTitle("Your Games")
+                    .foregroundColor(.white) // Set the text color to white
+                    // Add the Create Game button in the navigation bar
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Button(action: {
+                                showingCreateGame = true
+                            }) {
+                                Image(systemName: "plus.circle")
+                                    .font(.title)
+                                    .foregroundColor(Color(red: 0.75, green: 0.87, blue: 0.97)) // Light pastel blue
+                            }
+                        }
+                    }
+                    // Present the create game sheet when the button is tapped
+                    .sheet(isPresented: $showingCreateGame) {
+                        CreateGameView { newGame in
+                            games.append(newGame)
+                        }
+                        .preferredColorScheme(.dark) // Force the sheet to use dark mode
                     }
                 }
-            }
-            // Present the create game sheet when the button is tapped
-            .sheet(isPresented: $showingCreateGame) {
-                CreateGameView { newGame in
-                    games.append(newGame)
-                }
-                .preferredColorScheme(.dark) // Force the sheet to use dark mode
+                .preferredColorScheme(.dark) // Force dark mode throughout the app
             }
         }
-        .preferredColorScheme(.dark) // Force dark mode throughout the app
     }
 }
+
 
 // MARK: - Create Game View
 
