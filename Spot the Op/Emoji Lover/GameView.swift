@@ -56,6 +56,7 @@ enum GameMode: String, CaseIterable, Identifiable {
     var id: String { self.rawValue }
 }
 
+
 // MARK: - Google Map View with Heatmap
 struct GoogleMapView: UIViewRepresentable {
     var game: Game
@@ -124,12 +125,12 @@ struct GoogleMapView: UIViewRepresentable {
     }
 }
 
-// MARK: - Game Detail View
 struct GameDetailView: View {
-    @StateObject private var locationManager = LocationManager() // Use location manager to fetch current location
+    @StateObject private var locationManager = LocationManager() // Location manager for the current location
     @State private var game: Game // Keep game mutable
-    @State private var showSpotModal = false // Controls the display of the sheet
+    @State private var showSpotModal = false // Controls the display of the sheet for spotting someone
     @State private var selectedTab = 0 // Control for the tab view
+    @State private var showPredictiveDataView = false // Controls the display of the predictive data view
 
     init(game: Game) {
         _game = State(initialValue: game)
@@ -145,9 +146,6 @@ struct GameDetailView: View {
                         .cornerRadius(10)
                         .padding()
 
-                    Text("Latitude: \(game.latitude)")
-                    Text("Longitude: \(game.longitude)")
-                    
 
                     // Spot someone button with current location
                     Button(action: {
@@ -159,6 +157,19 @@ struct GameDetailView: View {
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                    }
+
+                    // "Generate Predictive Data" button
+                    Button(action: {
+                        showPredictiveDataView = true
+                    }) {
+                        Text("Generate Predictive Data")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.green)
                             .foregroundColor(.white)
                             .cornerRadius(10)
                     }
@@ -206,9 +217,11 @@ struct GameDetailView: View {
         .sheet(isPresented: $showSpotModal) {
             SpotModalView(game: $game, showSpotModal: $showSpotModal, locationManager: locationManager)
         }
+        .sheet(isPresented: $showPredictiveDataView) {
+            PredictiveDataView(game: game)
+        }
     }
 }
-
 // MARK: - Leaderboard View
 
 struct LeaderboardView: View {
