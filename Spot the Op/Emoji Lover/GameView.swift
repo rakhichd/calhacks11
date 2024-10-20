@@ -129,103 +129,220 @@ struct GoogleMapView: UIViewRepresentable {
 }
 
 // MARK: - Game Detail View
+
 struct GameDetailView: View {
     @StateObject private var locationManager = LocationManager() // Use location manager to fetch current location
-    @State private var game: Game // Keep game mutable
+    @StateObject private var viewModel = GameViewModel() // ViewModel to fetch game data
     @State private var showSpotModal = false // Controls the display of the sheet
     @State private var selectedTab = 0 // Control for the tab view
-
-    init(game: Game) {
-        _game = State(initialValue: game)
-    }
-
+    @State private var selectedGame: Game? // Store the selected game as @State
+    var gameId: String // Pass the game ID to fetch the specific game
+    
     var body: some View {
+        VStack {
+            if let game = selectedGame {
+                tabView
+            } else {
+                loadingView
+            }
+        }
+        .onAppear {
+            // Fetch games when the view appears
+            viewModel.fetchGames { games in
+                selectedGame = games.first(where: { $0.id == gameId })
+            }
+        }
+        .navigationTitle(selectedGame?.name ?? "Game Details") // Set navigation title
+        .sheet(isPresented: $showSpotModal) {
+            if let game = selectedGame {
+                SpotModalView(game: game, showSpotModal: $showSpotModal, locationManager: locationManager)
+            }
+        }
+    }
+    
+    private var loadingView: some View {
+        Text("Loading games...") // Show loading text while fetching
+    }
+    
+    private var tabView: some View {
         TabView(selection: $selectedTab) {
-            // Game Details Tab
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    GoogleMapView(game: game)
-                        .frame(height: 300)
-                        .cornerRadius(10)
-                        .padding()
-
-//                    Text("Latitude: \(game.latitude)")
-//                    Text("Longitude: \(game.longitude)")
-
-                    // Spot someone button with current location
-                    Button(action: {
-                        locationManager.requestLocation()
-                        showSpotModal = true
-                    }) {
-                        Text("Spot Someone")
-                            .font(.headline)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                    }
-
-                    // Display spotted history with image preview (if available)
-                    if !game.spottedHistory.isEmpty {
-                        Text("Spotted History:")
-                            .font(.headline)
-                        ForEach(game.spottedHistory) { spot in
-                            VStack(alignment: .leading) {
-                                Text("Person: \(spot.personSpotted)")
-                                Text("Latitude: \(spot.latitude), Longitude: \(spot.longitude)")
-                                Text("Timestamp: \(spot.timestamp, formatter: DateFormatter.spotFormatter)")
-                                
-                                // Show image if available
-                                if let imageData = spot.imageData, let image = UIImage(data: imageData) {
-                                    Image(uiImage: image)
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(height: 200)
-                                        .cornerRadius(10)
-                                }
-                            }
-                            .padding(.bottom, 5)
-                        }
-                    }
-
-                    Spacer()
+            gameDetailsTab
+                .tabItem {
+                    Label("Game", systemImage: "gamecontroller")
                 }
-                .padding()
-            }
-            .tabItem {
-                Label("Game", systemImage: "gamecontroller")
-            }
-            .tag(0)
-
-            // Leaderboard Tab
-            LeaderboardView(game: game)
+                .tag(0)
+            
+            leaderboardTab
                 .tabItem {
                     Label("Leaderboard", systemImage: "list.number")
                 }
                 .tag(1)
         }
-        .navigationTitle(game.name)
-        .sheet(isPresented: $showSpotModal) {
-            SpotModalView(game: $game, showSpotModal: $showSpotModal, locationManager: locationManager)
+    }
+    
+    private var gameDetailsTab: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                if let game = selectedGame {
+                    GoogleMapView(game: game)
+                        .frame(height: 300)
+                        .cornerRadius(10)
+                        .padding()
+                    
+                    spotSomeoneButton
+                    
+                    if !game.spottedHistory.isEmpty {
+                        spottedHistoryView(game: game)
+                    }
+                } else {
+                    Text("Game not found") // In case the game is not found
+                }
+                
+                Spacer()
+            }
+            .padding()
+        }
+    }
+    
+//    private var leaderboardTab: some View {
+//        Text("Leaderboard") // Placeholder for leaderboard view
+//    }
+    
+    @State var results: [(String, Int)] = []
+    
+    private var leaderboardTab: some View {
+        VStack(alignment: .leading) {
+            Text("Leaderboard")
+                .font(.headline)
+                .padding()
+
+            // Compute the top spotted people
+            
+            
+            if results.isEmpty {
+                Text("No one has been spotted yet.")
+                    .padding()
+            } else {
+                // Display the top 5 people
+                ForEach(results, id: \.0) { name, count in
+                    HStack {
+                        Text("\(name)") // Rank and person's name
+                        Spacer()
+                        Text("\(count) times") // Number of times they've been spotted
+                    }
+                    .padding(.vertical, 5)
+                    .padding(.horizontal)
+                }
+            }
+        }
+        .padding()
+        .onAppear {
+            getTopSpotted()
+        }
+    }
+    func getTopSpotted() {
+        // Create a dictionary to count occurrences of each person
+        // get the storage, find the appropriate game with gameid, then iterate through spottedhistory
+        
+        let gamesCollection = Firestore.firestore().collection("games")
+        var personCountArray:[(person: String, count: Int)] = []
+
+        // Create a DispatchGroup to handle multiple async calls
+        
+        
+        // Log the gameID being fetched
+        print("Fetching game with ID: \(gameId)")
+        
+        gamesCollection.document(gameId).getDocument { (document, error) in
+            if let error = error {
+                print("Error fetching game \(gameId): \(error.localizedDescription)")
+                return
+            }
+            
+            guard let document = document, document.exists, let data = document.data() else {
+                print("Game \(gameId) not found or document does not exist")
+                return
+            }
+            var scores = [String: Int]()
+            if let spottedHistoryArray = data["spottedHistory"] as? [[String: Any]] {
+                    // Iterate over each dictionary in the array
+                    for spot in spottedHistoryArray {
+                        if let personSpotted = spot["personSpotted"] as? String {
+                            print("Person spotted: \(personSpotted)")
+                            scores[personSpotted, default:0] += 1
+                        } else {
+                            print("Person spotted data is missing or not a String")
+                        }
+                    }
+                } else {
+                    print("No valid spotted history data found")
+            }
+            print(scores)
+            for (key, value) in scores {
+                personCountArray.append((key, value)) // Append each tuple manually
+            }
+            print("right after assignment")
+            print(personCountArray)
+            let sortedArray = personCountArray.sorted { $0.1 > $1.1 }
+            
+            results = sortedArray
+        }
+    }
+    
+    
+    
+    private var spotSomeoneButton: some View {
+        Button(action: {
+            locationManager.requestLocation()
+            showSpotModal = true
+        }) {
+            Text("Spot Someone")
+                .font(.headline)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Color.blue)
+                .foregroundColor(.white)
+                .cornerRadius(10)
+        }
+    }
+    
+    private func spottedHistoryView(game: Game) -> some View {
+        VStack(alignment: .leading) {
+            Text("Spotted History:")
+                .font(.headline)
+            ForEach(game.spottedHistory) { spot in
+                VStack(alignment: .leading) {
+                    Text("Person: \(spot.personSpotted)")
+                    Text("Latitude: \(spot.latitude), Longitude: \(spot.longitude)")
+                    Text("Timestamp: \(spot.timestamp, formatter: DateFormatter.spotFormatter)")
+                    // Handle image rendering if needed
+                }
+                .padding(.bottom, 5)
+            }
         }
     }
 }
 
+
 // MARK: - Leaderboard View
-
 struct LeaderboardView: View {
-    var game: Game // Pass the game as a parameter
-
+    let game: Game
+    
+    // Compute the top spotted people
+    var topSpotted: [(person: String, count: Int)] {
+        // Create a dictionary to count occurrences
+        let spottedCount = Dictionary(grouping: game.spottedHistory.map { $0.personSpotted }, by: { $0 })
+            .mapValues { $0.count }
+        
+        // Convert dictionary to an array and sort by count (descending)
+        let sortedSpotted = spottedCount.sorted { $0.value > $1.value }
+        
+        // Take the top 5 people
+        return Array(sortedSpotted.prefix(5)).map { (person: $0.key, count: $0.value) }
+    }
+    
     var body: some View {
         VStack(alignment: .leading) {
-            Text("Leaderboard")
-                .font(.largeTitle)
-                .padding()
-
-            // Fetch the top 5 people
-            let topSpotted = game.topSpottedPeople()
-
             if topSpotted.isEmpty {
                 Text("No one has been spotted yet.")
                     .padding()
@@ -234,25 +351,64 @@ struct LeaderboardView: View {
                 ForEach(0..<topSpotted.count, id: \.self) { index in
                     let person = topSpotted[index]
                     HStack {
-                        Text("\(index + 1). \(person.person)")
+                        Text("\(index + 1). \(person.person)") // Rank and person's name
                         Spacer()
-                        Text("\(person.count) times")
+                        Text("\(person.count) times") // Number of times they've been spotted
                     }
                     .padding(.vertical, 5)
                     .padding(.horizontal)
                 }
             }
-
-            Spacer()
         }
         .padding()
     }
 }
 
+//struct LeaderboardView: View {
+//    var game: Game // Pass the game as a parameter
+//
+//    var body: some View {
+//        VStack(alignment: .leading) {
+//            Text("Leaderboard")
+//                .font(.largeTitle)
+//                .padding()
+//
+//            // Fetch the top 5 people
+//            let topSpotted = game.topSpottedPeople()
+//            
+//            
+//            ForEach(game.spottedHistory) { spot in
+//                    Text("Person spotted: \(spot.personSpotted)")
+//                }
+//            
+//
+//            if topSpotted.isEmpty {
+//                Text("No one has been spotted yet.")
+//                    .padding()
+//            } else {
+//                // Display the top 5 people
+//                ForEach(0..<topSpotted.count, id: \.self) { index in
+//                    let person = topSpotted[index]
+//                    HStack {
+//                        Text("\(index + 1). \(person.person)")
+//                        Spacer()
+//                        Text("\(person.count) times")
+//                    }
+//                    .padding(.vertical, 5)
+//                    .padding(.horizontal)
+//                }
+//            }
+//
+//            Spacer()
+//        }
+//        .padding()
+//    }
+//}
+
 // MARK: - Spot Modal View
 
 struct SpotModalView: View {
-    @Binding var game: Game
+    @State var game: Game
     @Binding var showSpotModal: Bool
     @State private var newPersonName = "" // For new person
     @State private var selectedPerson = "" // For selecting an existing person
@@ -332,15 +488,15 @@ struct SpotModalView: View {
     // Function to add a new spotted location using preset coordinates and image
     func spotSomeone(latitude: Double, longitude: Double) {
         let personSpotted = newPersonName.isEmpty ? selectedPerson : newPersonName
-
-        // Convert selected image to Data for storage
-        let imageData = selectedImage?.jpegData(compressionQuality: 0.8)
-        
         let currTime = Date()
 
-        if let imageDataR = selectedImage?.jpegData(compressionQuality: 0.8) {
+        // Convert selected image to Data for storage
+        if let imageData = selectedImage?.jpegData(compressionQuality: 0.5) {
             // Upload image if selected
-            uploadImageToFirebase(imageData: imageDataR) { downloadURL, error in
+            
+            let imageName = UUID().uuidString
+            
+            uploadImageToFirebase(imageName:imageName, gameId: game.id, imageData: imageData) { downloadURL, error in
                 if let error = error {
                     print("Failed to upload image: \(error.localizedDescription)")
                     
@@ -350,56 +506,47 @@ struct SpotModalView: View {
                     print("Image URL: \(downloadURL)")
                     
                     // Call gameDbUpdate with the download URL as an optional String
-                    gameDbUpdate(gameId: game.id,latitude: latitude, longitude: longitude, personName: personSpotted, timestamp: currTime, imgData: downloadURL)
+                    gameDbUpdate(gameId: game.id, latitude: latitude, longitude: longitude, personName: personSpotted, timestamp: currTime, imgData: imageName)
                     
                     // Update game spotted history with image URL
-                    let spottedLocation = SpottedLocation(latitude: latitude, longitude: longitude, timestamp: currTime, personSpotted: personSpotted)
+                    let spottedLocation = SpottedLocation(latitude: latitude, longitude: longitude, timestamp: currTime, personSpotted: personSpotted, imageData: imageData)
                     game.spottedHistory.append(spottedLocation)
                 }
             }
         } else {
             // No image selected, proceed without uploading an image
             print("No image selected.")
-            
-            // Call gameDbUpdate with nil for imgData
             gameDbUpdate(gameId: game.id, latitude: latitude, longitude: longitude, personName: personSpotted, timestamp: currTime, imgData: nil)
             
-            // Optionally update game spotted history without image
             let spottedLocation = SpottedLocation(latitude: latitude, longitude: longitude, timestamp: currTime, personSpotted: personSpotted)
             game.spottedHistory.append(spottedLocation)
         }
 
-
-        // Clear the input field and selection
+        // Reset input fields
         newPersonName = ""
         selectedPerson = ""
-
-        // Close the modal
         showSpotModal = false
     }
     
-    func uploadImageToFirebase(imageData: Data, completion: @escaping (String?, Error?) -> Void) {
-        // Create a unique identifier for the image
-        let imageUUID = UUID().uuidString
-        print(imageUUID)
-        // Reference to Firebase Storage
-        let storageRef = Storage.storage().reference().child("images/\(imageUUID).jpg")
+    func uploadImageToFirebase(imageName: String, gameId: String, imageData: Data, completion: @escaping (String?, Error?) -> Void) {
+        // Create a unique name for the image based on timestamp or UUID
+        let storageRef = Storage.storage().reference().child("images/\(imageName).jpg")
         
-        // Upload image data
+        // Upload the image data to Firebase Storage
         storageRef.putData(imageData, metadata: nil) { (metadata, error) in
             if let error = error {
-                print("Error uploading image: \(error.localizedDescription)")
+                print("Error during image upload: \(error.localizedDescription)")
                 completion(nil, error)
                 return
             }
             
-            // Fetch the download URL
+            // Once the upload is complete, fetch the download URL
             storageRef.downloadURL { (url, error) in
                 if let error = error {
-                    print("Error fetching download URL: \(error.localizedDescription)")
+                    print("Failed to fetch download URL: \(error.localizedDescription)")
                     completion(nil, error)
                 } else if let downloadURL = url?.absoluteString {
-                    print("Image successfully uploaded. Download URL: \(downloadURL)")
+                    print("Successfully uploaded image. Download URL: \(downloadURL)")
                     completion(downloadURL, nil)
                 }
             }
@@ -540,9 +687,9 @@ struct ImagePicker: UIViewControllerRepresentable {
 
 // MARK: - Preview
 
-// Optional preview provider for SwiftUI previews
-struct GameView_Previews: PreviewProvider {
-    static var previews: some View {
-        GameDetailView(game: Game(id: "50BCBFB2-D9BD-4888-A56B-BC2A3F7F75E1", name: "UC Berkeley", latitude: 37.8719, longitude: -122.2585))
-    }
-}
+//// Optional preview provider for SwiftUI previews
+//struct GameView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        GameDetailView(game: Game(id: "50BCBFB2-D9BD-4888-A56B-BC2A3F7F75E1", name: "UC Berkeley", latitude: 37.8719, longitude: -122.2585))
+//    }
+//}

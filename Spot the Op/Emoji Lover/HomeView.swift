@@ -33,7 +33,7 @@ struct HomeView: View {
                 VStack(spacing: 10) {
                     ForEach(games) { game in
                         // Wrap each game in a NavigationLink to GameDetailView
-                        NavigationLink(destination: GameDetailView(game: game)) {
+                        NavigationLink(destination: GameDetailView(gameId: game.id)) {
                             VStack(alignment: .leading) {
                                 Text(game.name)
                                     .font(.headline)
@@ -104,7 +104,7 @@ struct HomeView: View {
             self.fetchGames(gameIDs: gameIDs)
         }
     }
-
+    
     private func fetchGames(gameIDs: [String]) {
         let gamesCollection = Firestore.firestore().collection("games")
 
@@ -113,35 +113,123 @@ struct HomeView: View {
 
         for gameID in gameIDs {
             group.enter() // Enter the group before starting each fetch
+            
+            // Log the gameID being fetched
+            print("Fetching game with ID: \(gameID)")
+            
             gamesCollection.document(gameID).getDocument { (document, error) in
-                if let document = document, document.exists,
-                   let data = document.data() {
-                    // Convert Firestore document data into Game model
-                    let game = Game(
-                        id: gameID as? String ?? "",
-                        name: data["gameName"] as? String ?? "",
-                        latitude: data["latitude"] as? Double ?? 0.0,
-                        longitude: data["longitude"] as? Double ?? 0.0,
-                        mode: GameMode(rawValue: data["gameMode"] as? String ?? ""),
-                        invitedFriends: data["invitedFriends"] as? [String] ?? [],
-                        spottedHistory: data["spottedHistory"] as? [SpottedLocation] ?? []
-                    )
-
-                    // Only append the game if it doesn't already exist in the games array
-                    if !games.contains(where: { $0.name == game.name && $0.latitude == game.latitude && $0.longitude == game.longitude }) {
-                        games.append(game) // Append the fetched game to the games array
-                    }
-                } else {
-                    print("Game not found or error fetching game: \(error?.localizedDescription ?? "No error information")")
+                defer {
+                    group.leave() // Ensure the group leave is called
                 }
-                group.leave() // Leave the group after each fetch is complete
+
+                if let error = error {
+                    print("Error fetching game \(gameID): \(error.localizedDescription)")
+                    return
+                }
+
+                guard let document = document, document.exists, let data = document.data() else {
+                    print("Game \(gameID) not found or document does not exist")
+                    return
+                }
+                
+
+                // Log the document data
+                print("Document data for \(gameID): \(data)")
+
+                // Check individual fields
+                let gameName = data["gameName"] as? String ?? "Unknown Game"
+                let latitude = data["latitude"] as? Double ?? 0.0
+                let longitude = data["longitude"] as? Double ?? 0.0
+                let gameMode = GameMode(rawValue: data["gameMode"] as? String ?? "")
+
+                print("Parsed Game - Name: \(gameName), Latitude: \(latitude), Longitude: \(longitude), Mode: \(gameMode?.rawValue ?? "Unknown")")
+
+                print("Fetched game data for ID \(gameID): \(data)") // Log the document data
+                
+                // Convert Firestore document data into Game model
+                let game = Game(
+                    id: gameID,  // gameID is already a String
+                    name: data["gameName"] as? String ?? "Unknown Game",  // Default to "Unknown Game" if no name found
+                    latitude: data["latitude"] as? Double ?? 0.0,
+                    longitude: data["longitude"] as? Double ?? 0.0,
+                    mode: GameMode(rawValue: data["gameMode"] as? String ?? ""),
+                    invitedFriends: data["invitedFriends"] as? [String] ?? [],
+                    spottedHistory: self.parseSpottedHistory(data: data["spottedHistory"] as? [[String: Any]] ?? [])
+                )
+
+                // Only append the game if it doesn't already exist in the games array
+                if !self.games.contains(where: { $0.id == game.id }) {
+                    self.games.append(game) // Append the fetched game to the games array
+                    print("Game with ID \(gameID) added to the games array.")
+                } else {
+                    print("Game with ID \(gameID) already exists in the games array.")
+                }
             }
         }
 
         group.notify(queue: .main) {
-            print("Finished fetching games.")
+            print("Finished fetching games. Total games: \(self.games.count)")
+            print("Games Included. Total games: \(self.games)")
         }
     }
+
+
+    private func parseSpottedHistory(data: [[String: Any]]) -> [SpottedLocation] {
+        return data.compactMap { dict in
+            guard let latitude = dict["latitude"] as? Double,
+                  let longitude = dict["longitude"] as? Double,
+                  let personSpotted = dict["personSpotted"] as? String,
+                  let timestamp = dict["timestamp"] as? Timestamp else {
+                return nil
+            }
+
+            return SpottedLocation(
+                latitude: latitude,
+                longitude: longitude,
+                timestamp: timestamp.dateValue(),
+                personSpotted: personSpotted
+            )
+        }
+    }
+
+
+//    private func fetchGames(gameIDs: [String]) {
+//        let gamesCollection = Firestore.firestore().collection("games")
+//
+//        // Create a DispatchGroup to handle multiple async calls
+//        let group = DispatchGroup()
+//
+//        for gameID in gameIDs {
+//            group.enter() // Enter the group before starting each fetch
+//            gamesCollection.document(gameID).getDocument { (document, error) in
+//                if let document = document, document.exists,
+//                   let data = document.data() {
+//                    // Convert Firestore document data into Game model
+//                    let game = Game(
+//                        id: gameID,
+//                        name: data["gameName"] as? String ?? "",
+//                        latitude: data["latitude"] as? Double ?? 0.0,
+//                        longitude: data["longitude"] as? Double ?? 0.0,
+//                        mode: GameMode(rawValue: data["gameMode"] as? String ?? ""),
+//                        invitedFriends: data["invitedFriends"] as? [String] ?? [],
+//                        spottedHistory: data["spottedHistory"] as? [SpottedLocation] ?? []
+//                    )
+//
+//                    // Only append the game if it doesn't already exist in the games array
+//                    if !games.contains(where: { $0.id == game.id }) {
+//                        games.append(game) // Append the fetched game to the games array
+//                    }
+//                } else {
+//                    print("Game not found or error fetching game: \(error?.localizedDescription ?? "No error information")")
+//                }
+//                group.leave() // Leave the group after each fetch is complete
+//            }
+//        }
+//
+//        group.notify(queue: .main) {
+//            print("Finished fetching games.")
+//        }
+//    }
 
 
 }
