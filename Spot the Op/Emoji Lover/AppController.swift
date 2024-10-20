@@ -27,9 +27,6 @@ class AppController: ObservableObject {
     
     private var db = Firestore.firestore()
     
-//    init() {
-//        listenToAuthChanges()
-//    }
     
     func listenToAuthChanges() {
                 Auth.auth().addStateDidChangeListener { auth, user in
