@@ -8,6 +8,7 @@
 import SwiftUI
 import Combine
 import FirebaseAuth
+import FirebaseFirestore
 
 enum AuthState {
     case undefined
@@ -24,6 +25,8 @@ class AppController: ObservableObject {
     
     @Published var authState: AuthState = .undefined
     
+    private var db = Firestore.firestore()
+    
 //    init() {
 //        listenToAuthChanges()
 //    }
@@ -36,7 +39,16 @@ class AppController: ObservableObject {
             }
     
     func signUp() async throws {
-        _ = try await Auth.auth().createUser(withEmail: email, password: password)
+        let authResult = try await Auth.auth().createUser(withEmail: email, password: password)
+        let userId = authResult.user.uid
+        
+        let userData: [String: Any] = [
+                "email": email,
+                "games": [] // Initialize with an empty array of games
+            ]
+        
+        try await db.collection("users").document(userId).setData(userData, merge: true)
+            print("User created and added to Firestore: \(userId)")
         
     }
     

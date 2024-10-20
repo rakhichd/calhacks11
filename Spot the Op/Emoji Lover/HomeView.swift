@@ -1,6 +1,8 @@
 // HomeView.swift
 import SwiftUI
 import GoogleMaps
+import FirebaseFirestore
+import FirebaseAuth
 
 // MARK: - Home View
 enum InviteOption: String, CaseIterable, Identifiable {
@@ -18,6 +20,8 @@ struct HomeView: View {
         Game(name: "UCLA", latitude: 34.0689, longitude: -118.4452),
         Game(name: "UC San Diego", latitude: 32.8801, longitude: -117.2340)
     ]
+    
+
 
     // State variable to control the presentation of the create game sheet
     @State private var showingCreateGame = false
@@ -93,6 +97,8 @@ struct CreateGameView: View {
     @State private var name = ""
     @State private var selectedMode: GameMode = .spotMyEx
     @StateObject private var locationManager = LocationManager()
+    private var db = Firestore.firestore()
+
 
     // Inviting friends
     @State private var inviteOption: InviteOption = .none
@@ -223,6 +229,26 @@ struct CreateGameView: View {
         }
 
         let newGame = Game(name: name, latitude: lat, longitude: lon, mode: selectedMode, invitedFriends: invitedUsernames)
+            
+//                    "gameName": name,
+//                    "latitude": lat,
+//                    "longitude": lon,
+//                    "invitedFriends": invitedUsernames,
+//                    "gameMode": selectedMode.rawValue,
+//                    "createdAt": Timestamp(date: Date()),
+//                    "spottedHistory": newGame.sdddddspottedHistory.map { spottedLocation in
+//                                return [
+//                                    "latitude": spottedLocation.latitude,
+//                                    "longitude": spottedLocation.longitude,
+//                                    "timestamp": spottedLocation.timestamp
+//                                ]
+//                            }
+//                    
+//                ]
+                
+                // Add a new document in the "games" collection with the user's UUID
+        
+        
         onAddGame(newGame)
     }
 
