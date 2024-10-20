@@ -78,6 +78,6 @@ struct PredictiveDataView: View {
 
 struct PredictiveDataView_Previews: PreviewProvider {
     static var previews: some View {
-        PredictiveDataView(game: Game(name: "UC Berkeley", latitude: 37.8719, longitude: -122.2585))
+        PredictiveDataView(game: Game(id: "", name: "UC Berkeley", latitude: 37.8719, longitude: -122.2585))
     }
 }

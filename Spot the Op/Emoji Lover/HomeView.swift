@@ -1,3 +1,4 @@
+// HomeView.swift
 import SwiftUI
 import GoogleMaps
 import CoreLocation
@@ -22,8 +23,8 @@ struct HomeView: View {
 
     // State variable to control the presentation of the create game sheet
     @State private var showingCreateGame = false
-
-    // State variable for location authorization
+    
+    //State Variable for location use auth
     @State private var isAuthorized: Bool = false
 
     var body: some View {
@@ -35,27 +36,11 @@ struct HomeView: View {
                         NavigationLink(destination: GameDetailView(gameId: game.id)) {
                             VStack(alignment: .leading) {
                                 Text(game.name)
-                                    .font(.custom("PressStart2P-Regular", size: 14))
                                     .bold()
                                     .foregroundColor(Color(red: 0.75, green: 0.87, blue: 0.97)) // Light pastel blue
-                                    .padding(.horizontal)
-
-                                // Display the game mode if needed
-                                if let mode = game.mode {
-                                    Text("Mode: \(mode.rawValue)")
-                                        .font(.custom("PressStart2P-Regular", size: 12))
-                                        .foregroundColor(Color(red: 0.95, green: 0.76, blue: 0.98)) // Light pastel pink
-                                        .padding(.horizontal)
-                                }
-
-                                // Display invited friends if any
-                                if !game.invitedFriends.isEmpty {
-                                    Text("Invited Friends: \(game.invitedFriends.joined(separator: ", "))")
-                                        .font(.custom("PressStart2P-Regular", size: 12))
-                                        .foregroundColor(Color(red: 0.8, green: 0.95, blue: 0.8)) // Light pastel green
-                                        .padding(.horizontal)
-                                }
-
+                                     .padding(.horizontal)
+                                
+                    
                                 // Display the Google Map for each game
                                 GoogleMapView(game: game)
                                     .frame(height: 200) // Reduced frame height for a smaller map
@@ -94,12 +79,10 @@ struct HomeView: View {
             }
         }
         .preferredColorScheme(.dark) // Force dark mode throughout the app
-      .onAppear {
+        .onAppear {
                         fetchUserGames()
                     }
     }
-    }
-}
     
     private func fetchUserGames() {
         guard let currentUser = Auth.auth().currentUser else {
@@ -217,6 +200,9 @@ struct HomeView: View {
                 personSpotted: personSpotted
             )
         }
+    }
+
+}
 
 // MARK: - Create Game View
 
@@ -275,8 +261,7 @@ struct CreateGameView: View {
                             addUsername()
                         }) {
                             Text("Add Friend")
-                        }
-                        .disabled(username.isEmpty)
+                        }.disabled(username.isEmpty)
                         if !invitedUsernames.isEmpty {
                             Text("Invited Friends: \(invitedUsernames.joined(separator: ", "))")
                                 .font(.subheadline)
@@ -284,9 +269,9 @@ struct CreateGameView: View {
                         }
                     }
                 }
-                .listRowBackground(Color.black.opacity(0.7)) // Dark background for each section
+                .listRowBackground(Color.black.opacity(0.7))
 
-                Section(header: Text("Game Mode").foregroundColor(.white)) {
+                Section(header: Text("Game Mode")) {
                     Picker("Select Game Mode", selection: $selectedMode) {
                         ForEach(GameMode.allCases) { mode in
                             Text(mode.rawValue).tag(mode)
@@ -300,7 +285,6 @@ struct CreateGameView: View {
                 Section(header: Text("Game Details").foregroundColor(.white)) {
                     TextField("Name", text: $name)
                         .foregroundColor(.white)
-
                     if selectedMode == .custom {
                         if let location = locationManager.location {
                             Text("Location: \(location.coordinate.latitude), \(location.coordinate.longitude)")
@@ -309,12 +293,12 @@ struct CreateGameView: View {
                             Text("No location data available. Enable location in settings.")
                                 .foregroundColor(.red)
                         }
-
+                        
                     }
                 }
                 .listRowBackground(Color.black.opacity(0.7))
             }
-            .background(Color.black) // Dark background for the form
+            .background(Color.black)
             .onAppear {
                 if selectedMode == .custom {
                     locationManager.requestLocation()
@@ -336,10 +320,9 @@ struct CreateGameView: View {
             }.foregroundColor(.white), trailing: Button("Add") {
                 addGame()
                 presentationMode.wrappedValue.dismiss()
-            }.disabled(!canAddGame)
-            .foregroundColor(.white))
+            }.disabled(!canAddGame).foregroundColor(.white))
         }
-        .preferredColorScheme(.dark) // Force dark mode for the sheet
+        .preferredColorScheme(.dark)
     }
 
     var canAddGame: Bool {
