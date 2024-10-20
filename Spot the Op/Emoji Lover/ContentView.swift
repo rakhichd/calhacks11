@@ -3,6 +3,7 @@ import SwiftUI
 struct ContentView: View {
     
     @EnvironmentObject var appController: AppController
+    @StateObject private var locationManager = LocationManager()
     
     var body: some View {
         Group {
@@ -13,7 +14,7 @@ struct ContentView: View {
             case .authenticated:
                 TabView {
                     // Home Screen with Google Maps
-                    HomeView() // This is from HomeView.swift
+                    HomeView(locationManager: locationManager) // This is from HomeView.swift
                         .tabItem {
                             Label("Home", systemImage: "house")
                         }
@@ -39,9 +40,9 @@ struct ContentView: View {
 }
 
 
-#Preview {
-    ContentView()
-}
+//#Preview {
+//    ContentView()
+//}
 
 
 

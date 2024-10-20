@@ -1,6 +1,7 @@
 // HomeView.swift
 import SwiftUI
 import GoogleMaps
+import CoreLocation
 
 // MARK: - Home View
 enum InviteOption: String, CaseIterable, Identifiable {
@@ -12,6 +13,8 @@ enum InviteOption: String, CaseIterable, Identifiable {
 }
 
 struct HomeView: View {
+    // Observed object for location
+    @ObservedObject var locationManager: LocationManager
     // Use @State to allow modification of the games array
     @State private var games = [
         Game(name: "UC Berkeley", latitude: 37.8719, longitude: -122.2585),
@@ -21,6 +24,9 @@ struct HomeView: View {
 
     // State variable to control the presentation of the create game sheet
     @State private var showingCreateGame = false
+    
+    //State Variable for location use auth
+    @State private var isAuthorized: Bool = false
 
     var body: some View {
         NavigationView {
@@ -152,18 +158,26 @@ struct CreateGameView: View {
                 Section(header: Text("Game Details")) {
                     TextField("Name", text: $name)
                     if selectedMode == .custom {
-                        if locationManager.authorizationStatus == .denied || locationManager.authorizationStatus == .restricted {
-                            Text("Location access is denied. Please enable it in settings.")
-                                .foregroundColor(.red)
-                        } else if locationManager.location == nil {
-                            HStack {
-                                ProgressView()
-                                Text("Fetching current location...")
-                            }
+                        if let location = locationManager.location {
+                            Text("Location: \(location.coordinate.latitude), \(location.coordinate.longitude)")
                         } else {
-                            Text("Using your current location.")
-                                .foregroundColor(.green)
+                            Text("No location data available. Enable location in settings.")
                         }
+                        
+                        
+                        //if locationManager.authorizationStatus == .denied || locationManager.authorizationStatus == .restricted {
+                        //    Text("Location access is denied. Please enable it in settings.")
+                        //        .foregroundColor(.red)
+                        //} else if locationManager.location == nil {
+                        //    HStack {
+                        //        ProgressView()
+                        //        Text("Fetching current location...")
+                        //
+                        //    }
+                        //} else {
+                        //    Text("Using your current location.")
+                        //        .foregroundColor(.green)
+                        //}
                     }
                 }
             }
@@ -234,13 +248,25 @@ struct CreateGameView: View {
         invitedUsernames.append(username)
         username = ""
     }
+    //func updateAuthorizationStatus() {
+    //    if let status = locationManager.authorizationStatus {
+    //        switch status {
+    //        case .authorizedWhenInUse, .authorizedAlways:
+    //            isAuthorized = true
+    //        case .denied, .restricted:
+    //            isAuthorized = false
+    //        default:
+    //            isAuthorized = true
+    //        }
+    //    }
+    //}
 }
 
 // MARK: - Preview
 
 // Optional preview provider for SwiftUI previews
-struct HomeView_Previews: PreviewProvider {
-    static var previews: some View {
-        HomeView()
-    }
-}
+//struct HomeView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        HomeView(locationManager)
+//    }
+//}

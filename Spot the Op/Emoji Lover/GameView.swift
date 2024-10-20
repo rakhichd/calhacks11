@@ -2,6 +2,7 @@ import SwiftUI
 import GoogleMaps
 import GoogleMapsUtils // Import GoogleMapsUtils for heatmap functionality
 import CoreLocation
+import UIKit
 
 // MARK: - Models and Enums
 
@@ -40,7 +41,8 @@ struct SpottedLocation: Identifiable {
     let latitude: Double
     let longitude: Double
     let timestamp: Date
-    let personSpotted: String // Add personSpotted to track who was spotted
+    let personSpotted: String
+    var imageData: Data? // Optional data to store the image
 }
 
 // Enum to represent game modes
@@ -144,7 +146,7 @@ struct GameDetailView: View {
                             .cornerRadius(10)
                     }
 
-                    // Display spotted history
+                    // Display spotted history with image preview (if available)
                     if !game.spottedHistory.isEmpty {
                         Text("Spotted History:")
                             .font(.headline)
@@ -153,6 +155,15 @@ struct GameDetailView: View {
                                 Text("Person: \(spot.personSpotted)")
                                 Text("Latitude: \(spot.latitude), Longitude: \(spot.longitude)")
                                 Text("Timestamp: \(spot.timestamp, formatter: DateFormatter.spotFormatter)")
+                                
+                                // Show image if available
+                                if let imageData = spot.imageData, let image = UIImage(data: imageData) {
+                                    Image(uiImage: image)
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(height: 200)
+                                        .cornerRadius(10)
+                                }
                             }
                             .padding(.bottom, 5)
                         }
@@ -176,7 +187,7 @@ struct GameDetailView: View {
         }
         .navigationTitle(game.name)
         .sheet(isPresented: $showSpotModal) {
-            SpotModalView(game: $game, showSpotModal: $showSpotModal, currentLocation: locationManager.location)
+            SpotModalView(game: $game, showSpotModal: $showSpotModal, locationManager: locationManager)
         }
     }
 }
@@ -225,7 +236,9 @@ struct SpotModalView: View {
     @Binding var showSpotModal: Bool
     @State private var newPersonName = "" // For new person
     @State private var selectedPerson = "" // For selecting an existing person
-    var currentLocation: CLLocation? // Current location passed from LocationManager
+    @ObservedObject var locationManager: LocationManager
+    @State private var selectedImage: UIImage? = nil // Store the selected image
+    @State private var showImagePicker = false // Control for showing the image picker
 
     var body: some View {
         NavigationView {
@@ -244,8 +257,37 @@ struct SpotModalView: View {
                     }
                 }
 
+                Section(header: Text("Upload an image")) {
+                    if let image = selectedImage {
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: 200)
+                            .cornerRadius(10)
+                    } else {
+                        Button(action: {
+                            showImagePicker = true
+                        }) {
+                            Text("Choose Image")
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.blue)
+                                .foregroundColor(.white)
+                                .cornerRadius(10)
+                        }
+                    }
+                }
+
                 Button(action: {
-                    spotSomeone()
+                    if let currentLocation = locationManager.location {
+                        let latitude = currentLocation.coordinate.latitude
+                        let longitude = currentLocation.coordinate.longitude
+                        spotSomeone(latitude: latitude, longitude: longitude)
+                    } else {
+                        let latitude = 37.874942
+                        let longitude = -122.2703
+                        spotSomeone(latitude: latitude, longitude: longitude)
+                    }
                 }) {
                     Text("Add Spot")
                         .frame(maxWidth: .infinity)
@@ -260,18 +302,21 @@ struct SpotModalView: View {
             .navigationBarItems(trailing: Button("Cancel") {
                 showSpotModal = false
             })
+            .sheet(isPresented: $showImagePicker) {
+                ImagePicker(selectedImage: $selectedImage)
+            }
         }
     }
 
-    // Function to add a new spotted location
-    func spotSomeone() {
-        // Get the user's current location if available, otherwise fallback to preset coordinates
-        let latitude = currentLocation?.coordinate.latitude ?? 37.871900
-        let longitude = currentLocation?.coordinate.longitude ?? -122.258500
-        // Determine the person spotted (either new or selected)
+    // Function to add a new spotted location using preset coordinates and image
+    func spotSomeone(latitude: Double, longitude: Double) {
         let personSpotted = newPersonName.isEmpty ? selectedPerson : newPersonName
 
-        let spottedLocation = SpottedLocation(latitude: latitude, longitude: longitude, timestamp: Date(), personSpotted: personSpotted)
+        // Convert selected image to Data for storage
+        let imageData = selectedImage?.jpegData(compressionQuality: 0.8)
+
+        // Create a new SpottedLocation object with the provided latitude, longitude, and image
+        let spottedLocation = SpottedLocation(latitude: latitude, longitude: longitude, timestamp: Date(), personSpotted: personSpotted, imageData: imageData)
 
         // Update the game's spotted history
         game.spottedHistory.append(spottedLocation)
@@ -350,6 +395,43 @@ extension DateFormatter {
         formatter.timeStyle = .short
         return formatter
     }
+}
+
+// MARK: - Image Picker for Image Selection
+struct ImagePicker: UIViewControllerRepresentable {
+    @Binding var selectedImage: UIImage?
+    @Environment(\.presentationMode) private var presentationMode
+
+    class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
+        var parent: ImagePicker
+
+        init(parent: ImagePicker) {
+            self.parent = parent
+        }
+
+        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+            if let image = info[.originalImage] as? UIImage {
+                parent.selectedImage = image
+            }
+            parent.presentationMode.wrappedValue.dismiss()
+        }
+
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            parent.presentationMode.wrappedValue.dismiss()
+        }
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(parent: self)
+    }
+
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.delegate = context.coordinator
+        return picker
+    }
+
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
 }
 
 // MARK: - Preview
